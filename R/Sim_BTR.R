@@ -23,7 +23,7 @@
 #' @import shiny
 #'
 # library(shiny)
-sim_btr <- function( param, clims = NA, Tage =NA, syear = NA, eyear = NA, ObsF =NA , ObsV =NA ){
+sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
 
   # StartY <- max( min(Tage$Year), min(clims$Year)  )
   # EndY <- min( max(Tage$Year), max(clims$Year) )
@@ -83,11 +83,21 @@ sim_btr <- function( param, clims = NA, Tage =NA, syear = NA, eyear = NA, ObsF =
                    step = 1,
                    value = 200 ), ## end of sliderinput
        tags$hr(),
-       actionButton("Sim", "Calculate"),
+       sliderInput("Cores",
+                   "Use CPU cores:",
+                   min = 1,
+                   max = 32,
+                   step = 1,
+                   value = 5 ),
+       tags$hr(),
+       actionButton("Sim", "Run BTR model")
 
      ), # end c1
      column( ## col 2
        width = 2,
+       numericInput("syear", "Start year",2000,min = 1800 , max = Inf , step = 1), ##
+       numericInput("eyear", "End year",2001,min = 1800 , max = Inf , step = 1), ##
+
        h4( 'Climate parameters:' ),
        numericInput("AAT", "Accumulated temperature",param$values[param$parameter == 'AAT'  ],
                     min = 0 , max = Inf , step = 0.5), ##
@@ -114,12 +124,18 @@ sim_btr <- function( param, clims = NA, Tage =NA, syear = NA, eyear = NA, ObsF =
                    value = param$values[param$parameter == 'VPD3'  ] ), ## end of sliderinput
        sliderInput("VPD4", "VPD4(hPa):", min =  0, max = 5, step = 0.01,
                    value = param$values[param$parameter == 'VPD4'  ]), ## end of sliderinput
-       tags$hr(),
-
+       # tags$hr(),
        # Button
+       # actionButton("Sim", "Run BTR model"),
+       tags$hr(),
        downloadButton("downloadData", "Download Trend_age")
-
      ),# end c2
+
+     column(
+       width = 8,
+       plotOutput("FigSim"),
+
+     )
 
 
   )## ui end -----
@@ -134,9 +150,21 @@ sim_btr <- function( param, clims = NA, Tage =NA, syear = NA, eyear = NA, ObsF =
 
     )
 
+    ResData <- reactiveValues(
+      Sim = NA
+    )
+
     output$FigSim <- renderPlot( {
+
+      StartY <- max( min(Tage$Year), min(clims$Year) ,input$syear )
+      EndY <- min( max(Tage$Year), max(clims$Year), input$eyear )
+      Tage <- Tage[Tage$Year %in% c(StartY:EndY ),]
+      clims <- clims[clims$Year %in% c(StartY:EndY ),]
+      obsF <- obsF[obsF$Year %in% c(StartY:EndY ),]
+      obsV <- obsF[obsF$Year %in% c(StartY:EndY ),]
+
       ## 修改参数
-      clims <- SimData$clims
+      # clims <- SimData$clims
       param2 <- SimData$param
       NewP  <- data.frame(   parameter = c('AAT', "T1", "T4", "deltaH_A_Da","deltaH_D","deltaS_D",
                                            'M1','M2','M3','M4','VPD1' ,'VPD2','VPD3','VPD4'),
@@ -147,11 +175,43 @@ sim_btr <- function( param, clims = NA, Tage =NA, syear = NA, eyear = NA, ObsF =
       param2 <- AupdatedB(DataA = NewP,DataB = param2,ons = 'parameter' )
       SimData$param <- param2
 
-      ## 快速估算年轮宽度和细胞
+      LgM <- data.frame( SoilM = c(input$M1,input$M2,input$M3,input$M4 ) ,gM = c(0,1,1,0)  )
+      LgV <- data.frame( VPD = c(input$VPD1,input$VPD2,input$VPD3,input$VPD4 ) ,gV = c(0,1,1,0)  )
+
+      ## 气象限制图 和 Li 限制图
+      ggpubr::ggarrange(
+      ggplot2::ggplot(LgM)+
+        ggplot2::theme_bw()+
+        ggplot2::labs(subtitle = "gM" )+
+        # ggplot2::scale_color_manual(values = c("royalblue","red","orange"))+
+        ggplot2::geom_line( ggplot2::aes(x = SoilM, y = gM ))
+      ,
+      ggplot2::ggplot(LgV)+
+        ggplot2::theme_bw()+
+        ggplot2::labs(subtitle = "gVPD" )+
+        # ggplot2::scale_color_manual(values = c("royalblue","red","orange"))+
+        ggplot2::geom_line( ggplot2::aes(x = VPD, y = gV ))
+      ,nrow = 1 #, align = "v"
+    )
+
 
 
 
     }) ## Fig Sim end
+
+    observeEvent(input$Sim, { ## 点击Run BTR
+      # ResData$result <-  rBTRdev::btr_parallel( clim = SimData$clims ,parameters = SimData$param , age = SimData$Tage,
+      #                          syear = input$syear  ,eyear = input$eyear , Cores = input$Cores, writeRes = F)
+
+      # ResData$annaulRing <- ResSim$annaulRing
+      # ResData$xylem_trait <- ResSim$xylem_trait
+      # ResData$IntraAnnual <- ResSim$IntraAnnual
+      # ResData$microclim <- ResSim$microclim
+      # ResData$dailyParameters <- ResSim$dailyParameters
+
+
+
+    })
 
 
   }
