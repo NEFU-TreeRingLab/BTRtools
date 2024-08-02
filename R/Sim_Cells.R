@@ -3,9 +3,11 @@
 #'
 #' @import shiny
 #'
-#' @importFrom dplyr select mutate rename bind_rows group_by distinct
+#' @importFrom dplyr select mutate rename bind_rows group_by distinct case_when summarise filter
 #' @importFrom tidyr gather
 #' @importFrom ggplot2 ggplot theme_bw labs theme geom_point geom_line facet_wrap aes geom_boxplot
+#' @importFrom openxlsx write.xlsx
+#' @importFrom ggpubr ggarrange
 #'
 #' @param param BTRmodels parameters data
 #' @param ObsV Vessel anatomical trait measured by ROXAS
@@ -178,7 +180,7 @@ Sim_Cells <- function(ObsV =NULL ,ObsF=NULL , param,...) {
                                            input$vCAmax , input$vml , input$vsl , input$vmw, input$vsw,
                                            input$vWAmax, input$vWTmax, input$vWTmin, input$vWTa )   )
 
-      param2 <- AupdatedB(DataA = NewP,DataB = param2)
+      param2 <- AupdatedB(DataA = NewP,DataB = param2,ons = c('parameter','modul'))
 
       Adata$param <- param2
 

@@ -121,13 +121,13 @@ RegData <- function( dt , Nage , Nrw, Nla,
                   mExpLa = laA*exp(laB * Age ) + laC )
 
   ExpResRW <- tryCatch(
-    { modEXP = modelEXP(dt = dtOri,colx = "Age",coly =  "MRW" ,
+    { modEXP = modelEXP(dt = dtOri,colx = "Age",coly =  "MRW" , ## 运行modelEXP函数
                SSalpha = rwA, SSbeta = rwB, SSC = rwC )
-      list(TN = "Y", modEXP = modEXP  )
-    },error = function(e) {
-      list(TN = "N", modEXP = modEXP  )
-    },waring = function(w){
-      list(TN = "N", modEXP = modEXP  )
+      list(TN = "Y", modEXP = modEXP  )  ## 当函数正常运行时，输出 list, TN 赋值Y  和 modEXP赋值结果
+    },error = function(e) { ## 当函数 error 时
+      list(TN = "N", modEXP = modEXP  ) ## TN 赋值 N ， modExp 赋值结果“NULL”
+    },waring = function(w){ ## 当函数 warning 时
+      list(TN = "N", modEXP = modEXP  ) ## TN 赋值 N ， modExp 赋值结果“NULL”
     }   )## end trycatch
 
   if ( ExpResRW$TN == "Y" ) {
@@ -308,15 +308,74 @@ return(out)
 #'
 #'
 
-AupdatedB <- function( DataA , DataB){
+AupdatedB <- function( DataA , DataB, ons ){
 
   DataA <- data.table::as.data.table(DataA)
   DataB <- data.table::as.data.table(DataB)
-  DataB[DataA, values := Nvalues, on = c('parameter','modul')]
+  DataB[DataA, values := Nvalues, on = ons ]
   return( as.data.frame(DataB))
 }
 
+#' calculate gRs
+#'
+#' @return gRs
+#'
+#' @importFrom rBTRdev Compute_gR2
+#' @importFrom dplyr left_join group_by arrange mutate case_when filter count summarise select
+#' @importFrom tidyr spread gather
+#'
+#'
 
 
+
+ComputeGrs <- function(clims ,param){
+
+  param$values <- as.numeric(param$values)
+  growth_Param  <- param[param$modul == "gR",] ## 生长速率阈值参数
+
+  microclim <- rBTRdev:::Compute_gR2(clims , growth_Param) |>
+    dplyr::group_by(Year) |>
+    dplyr::arrange(Year,DOY) |>
+    dplyr::mutate( aT  = TEM - param$values[param$parameter == "T1"]  ,
+                   aT = dplyr::case_when(
+                   aT <0 ~ 0,
+                   aT >= 0 ~ aT),
+                   aaT = cumsum(aT),
+                   wgR = gE * pmin(gT,gM,gV),
+                   Mins = dplyr::case_when(
+                     gT < gM &gT < gV ~ 'gTd',
+                     gM < gT &gM < gV ~ 'gMd',
+                     gV < gT &gV < gM ~ 'gVd')
+                  ) |>
+    dplyr::filter( wgR > 0  & aaT >= param$values[param$parameter == "AAT"]  )
+
+    m1 <- microclim|>
+          dplyr::group_by( Year ) |>
+          dplyr::summarise(  gR = sum(wgR) , GSday = dplyr::n()  )
+
+    m2 <- microclim |> dplyr::count(Mins) |> tidyr::spread( key  = Mins, value = n )
+
+    m3 <- microclim|> dplyr::select(Year,DOY, wgR, Mins) |>
+      tidyr::spread( key  = Mins, value = wgR ) |> dplyr::group_by(Year) |>
+      dplyr::summarise( gTs = sum(gTd,na.rm = T) ,
+                 gMs = sum(gMd,na.rm = T) ,
+                 gVs = sum(gVd,na.rm = T)  )
+
+    m4 <- microclim |> dplyr::group_by(DOY) |>
+      dplyr::summarise( gT = mean(gT,na.rm = T) ,
+                        gM = mean(gM,na.rm = T) ,
+                        gV = mean(gV,na.rm = T)  ) |>
+      tidyr::gather(gR, val,-1)
+
+    m3 <- m1 |>
+      dplyr::left_join(m2) |>
+      dplyr::left_join(m3) |>
+      dplyr::mutate( sgR = scale(gR)    ) ## gT = gTs / gR ,gM = gMs / gR,gV = gVs / gR
+
+
+
+
+    return( list(DOYs = m4 , Years = m3   ) ) ## m3
+}
 
 

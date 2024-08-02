@@ -4,6 +4,12 @@ usethis::use_r("TestUITrend")
 
 usethis::use_r("Sim_Cells")
 
+usethis::use_r("Sim_gRs")
+
+usethis::use_r("Sim_Cambial")
+
+usethis::use_r("Sim_BTR")
+
 # usethis::use_package("dplyr")
 # usethis::use_package("mgcv")
 # usethis::use_package("nls.multstart")
@@ -58,4 +64,16 @@ ELwCell <- rbind(  CellGrwothData(param,wgR = 1, dry = 1, fgRLi = 0,vgRLi = 0 )|
   dplyr::select(Day,CA, CV,  DDOY,  EDOY,LWA , TDOY,WA,WT,type,EL)|>
   dplyr::distinct( .keep_all = TRUE, ignore = Day)
 
-## Tab 4 sim gR &
+## Tab 4 sim gRs
+
+
+Tage <- read.csv("C:\\Users\\Dr. Zhao\\Desktop\\TrendAge.csv")
+param <- openxlsx::read.xlsx("Test\\Tdt\\Parameters.xlsx")
+clims <- openxlsx::read.xlsx("Test\\Tdt\\Clim_5.xlsx") |> dplyr::filter(site == "LS")
+
+Bdata <- list(
+  param = data.frame(param),
+  clims = data.frame(clims),
+  Tage = data.frame(Tage)
+)
+
