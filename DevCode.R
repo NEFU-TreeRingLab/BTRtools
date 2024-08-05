@@ -28,6 +28,9 @@ devtools::load_all()
 
 
 library(tidyverse)
+
+
+
 library(shiny)
 
 
@@ -67,13 +70,63 @@ ELwCell <- rbind(  CellGrwothData(param,wgR = 1, dry = 1, fgRLi = 0,vgRLi = 0 )|
 ## Tab 4 sim gRs
 
 
-Tage <- read.csv("C:\\Users\\Dr. Zhao\\Desktop\\TrendAge.csv")
+Tage <- read.csv("C:\\Users\\Dr. Zhao\\Desktop\\TrendAge2.csv")
 param <- openxlsx::read.xlsx("Test\\Tdt\\Parameters.xlsx")
 clims <- openxlsx::read.xlsx("Test\\Tdt\\Clim_5.xlsx") |> dplyr::filter(site == "LS")
 
-Bdata <- list(
-  param = data.frame(param),
-  clims = data.frame(clims),
-  Tage = data.frame(Tage)
-)
+# ttp <- rBTRdev::btr_parallel(
+#   clim = clims,
+#   parameters = param,
+#   age =  Tage,
+#   syear = 2000, eyear = 2020,Cores = 10,
+#   writeRes = F,intraannual = F, gTmethod = "Jonhson" , division = "limit",
+#   testLim = F,CZgR = c(1,0,0,1 ), Pbar = T , testMod = F,Dcase = "min", Named = NULL  )
 
+
+ObsA <- readxl:::read_excel("Test\\Tdt\\LS_FM_A2.xlsx")
+ObsA$CWTall[ObsA$CWTall <= 0 ] <- NA
+ObsFilter <- unique( ObsA[ ,c( 'TID','path','Year' ) ] )|>
+   dplyr::group_by(Year,path) |>
+   dplyr::summarise( n = dplyr::n() ) |>
+   dplyr::filter(n >= 3 )
+
+
+ObsV <- ObsA |> dplyr::filter(path == 'V' , Year %in% ObsFilter$Year[ObsFilter$path == "V" ]   )
+ObsF <- ObsA |> dplyr::filter(path == 'F', Year %in% ObsFilter$Year[ObsFilter$path == "F" ] ) |>
+  dplyr::mutate(RRadDistR = round(RRadDistR, 1)) |>
+  dplyr::group_by(TID, path,ID,Year,RRadDistR) |>
+  dplyr::summarise(across(colnames(ObsV)[c( -1:-5,-8 )] , ~mean(., na.rm = TRUE) ) )
+
+
+
+
+
+# Bdata <- list(
+#   param = data.frame(param),
+#   clims = data.frame(clims),
+#   Tage = data.frame(Tage)
+# )
+##
+input <- param[ c(26:64),c(1,6)] |>
+  tibble::remove_rownames() |>
+  tibble::column_to_rownames("parameter") |>
+  t() |> as.data.frame()
+
+input$syear <- 2000
+input$eyear <- 2020
+input$Cores <- 12
+
+input$MaxLiDoyF <- 120
+input$MaxLiDoyV <- 130
+input$MinLiDoyF <- 190
+input$MinLiDoyV <- 200
+
+
+SimData <- list(
+  param = as.data.frame(param),
+  clims = as.data.frame(clims),
+  Tage = as.data.frame(Tage),
+  ObsF = as.data.frame(ObsF),
+  ObsV = as.data.frame(ObsV)
+)
+ResData <- list()

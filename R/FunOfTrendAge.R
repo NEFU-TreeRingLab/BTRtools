@@ -81,6 +81,8 @@ nors <- function( x ){
 #' @param Nage colname of age
 #' @param Nrw colname of ring width
 #' @param Nla colname of La
+#' @param Ncd colname of CD
+#' @param Nrcta colname of RCTA
 #' @param rwA rwA
 #' @param rwB rwB
 #' @param rwC rwC
@@ -97,13 +99,13 @@ nors <- function( x ){
 #' @importFrom rBTRdev mod.test
 #'
 ## Regression Result
-RegData <- function( dt , Nage , Nrw, Nla,
+RegData <- function( dt , Nage , Nrw, Nla,Ncd, Nrcta,
                      rwA, rwB, rwC, rwK, laA, laB, laC, laK ){
 
    dtOri <- dt |>
-    dplyr::select( all_of(c("Year", Nage, Nrw, Nla ) ) ) |>
+    dplyr::select( all_of(c("Year", Nage, Nrw, Nla,Ncd, Nrcta ) ) ) |>
     na.omit()
-  names(dtOri) <- c("Year", "Age","MRW", "MaxLA")
+  names(dtOri) <- c("Year", "age","MRW", "MaxLA", "CD", 'RCTA' )
 
   ifelse(is.na(rwA), rwA <- max(dtOri$MRW ),NA  )
   ifelse(is.na(rwC), rwC <- min(dtOri$MRW )*0.8,NA  )
@@ -113,15 +115,13 @@ RegData <- function( dt , Nage , Nrw, Nla,
   ifelse(is.na(laC), laC <- min(dtOri$MaxLA )*0.8,NA  )
   ifelse(is.na(laB), laB <- (laA - laC)/nrow(dtOri) ,NA  )
 
-
-
   dtOri <- dtOri |>
     dplyr::mutate(pGamRw=0, pExpRw=0,pGamLa=0,pExpLa=0,
-                  mExpRw = rwA*exp(rwB * Age ) + rwC,
-                  mExpLa = laA*exp(laB * Age ) + laC )
+                  mExpRw = rwA*exp(rwB * age ) + rwC,
+                  mExpLa = laA*exp(laB * age ) + laC )
 
   ExpResRW <- tryCatch(
-    { modEXP = modelEXP(dt = dtOri,colx = "Age",coly =  "MRW" , ## 运行modelEXP函数
+    { modEXP = modelEXP(dt = dtOri,colx = "age",coly =  "MRW" , ## 运行modelEXP函数
                SSalpha = rwA, SSbeta = rwB, SSC = rwC )
       list(TN = "Y", modEXP = modEXP  )  ## 当函数正常运行时，输出 list, TN 赋值Y  和 modEXP赋值结果
     },error = function(e) { ## 当函数 error 时
@@ -143,7 +143,7 @@ RegData <- function( dt , Nage , Nrw, Nla,
   }
 
   ExpResLA <- tryCatch(
-    { modEXP = modelEXP(dt = dtOri,colx = "Age",coly =  "MaxLA" ,
+    { modEXP = modelEXP(dt = dtOri,colx = "age",coly =  "MaxLA" ,
                SSalpha = rwA, SSbeta = rwB, SSC = rwC )
       list(TN = "Y", modEXP = modEXP  )
     },error = function(e) {
@@ -164,10 +164,10 @@ RegData <- function( dt , Nage , Nrw, Nla,
     cLa <-  paste("error:", round(min(dtOri$MaxLA)*0.5,5  )   )
   }
 
-  modGamRw <- mgcv::gam( MRW ~ s( Age , k = rwK ) ,data = dtOri  )
+  modGamRw <- mgcv::gam( MRW ~ s( age , k = rwK ) ,data = dtOri  )
   dtOri$pGamRw <- predict( modGamRw , dtOri )
 
-  modGamLa <- mgcv::gam( MaxLA ~ s( Age , k = rwK ) ,data = dtOri  )
+  modGamLa <- mgcv::gam( MaxLA ~ s( age , k = rwK ) ,data = dtOri  )
   dtOri$pGamLa<- predict( modGamLa , dtOri )
 
   dtNor <- dtOri |> dplyr::mutate( pGamRw = nors(pGamRw),  pExpRw = nors(pExpRw),
@@ -226,7 +226,7 @@ CellGrwothData <- function( param,wgR, dry, fgRLi,vgRLi ){
   colnames(dynparam.growth.t) <-
     c( 'L_i.fiber','L_i.vessel','dCA_cz',	'SumCL',	'SumVL',	'SumV',
        'v_c.fiber',	'v_w.fiber',	'v_l.fiber',	'v_c.vessel',	'v_w.vessel',	'v_l.vessel',
-       'deltaVN',	'Vcz',	'grwothSeason',	'Age',	'T_age',	'czgR',	'egR' )
+       'deltaVN',	'Vcz',	'grwothSeason',	'age',	'T_age',	'czgR',	'egR' )
 
   clim.today <-  matrix(1,nrow = 1, ncol = 2) |> data.frame()
   colnames(clim.today) <- c('DOY', 'Year')
@@ -305,7 +305,7 @@ return(out)
 #'
 #' @param DataA DataA
 #' @param DataB DataB
-#'
+#' @param ons by on colume
 #'
 
 AupdatedB <- function( DataA , DataB, ons ){
@@ -324,6 +324,8 @@ AupdatedB <- function( DataA , DataB, ons ){
 #' @importFrom dplyr left_join group_by arrange mutate case_when filter count summarise select
 #' @importFrom tidyr spread gather
 #'
+#' @param clims climate data
+#' @param param parameters
 #'
 
 
@@ -376,6 +378,169 @@ ComputeGrs <- function(clims ,param){
 
 
     return( list(DOYs = m4 , Years = m3   ) ) ## m3
+}
+
+
+#' calculate Div
+#'
+#' @return Div
+#'
+#' @importFrom rBTRdev Compute_gR2
+#' @importFrom dplyr left_join group_by arrange mutate case_when filter count summarise select
+#' @importFrom tidyr spread gather
+#' @importFrom tibble remove_rownames column_to_rownames
+#'
+#' @param param parameters
+#'
+
+C_Div <- function( param ){
+
+  params <- param |>
+    dplyr::filter( modul %in% c( "division", "gR") ) |>
+    dplyr::select(parameter,values) |>
+    tibble::remove_rownames() |>
+    tibble::column_to_rownames("parameter") |>
+    t() |> as.data.frame( )
+
+  rctaDivLimEW <- params$a2 *  seq(0,1,0.01) /params$maxRCTA
+  rctaDivLimLW <- params$a2 *  seq(0,1,0.01) /(params$maxRCTA * params$RCTADivT)
+  # rctaDivLim[ RCTA[ Today ]  == 99 ] <- waterDivLim ## ERROR CATCH mabey don't use it :20240803 修正后没有99
+
+  EWdeltaD_T <- params$deltaD * ( 1 +  params$Div_alpha -
+                                         exp( log(1/params$Div_alpha) * - rctaDivLimEW )  )
+
+  LWdeltaD_T <- params$deltaD * ( 1 +  params$Div_alpha -
+                                    exp( log(1/params$Div_alpha) * - rctaDivLimLW )  )
+
+  ttRCTA <- data.frame(RCTAt = seq(0,1,0.01) , dD_EW = EWdeltaD_T,dD_LW = LWdeltaD_T  ) |>
+    tidyr::gather(EL,dD,-1)
+
+
+  ttczgR <- data.frame( gR = seq(0,1,0.05) ,
+                        czgR = params$alpha_cz * exp( params$beta_cz * seq(0,1,0.05) ),
+                        Vcz = params$va_cz * params$alpha_cz * exp( params$beta_cz * seq(0,1,0.05)) )
+
+  return(list(ttRCTA = ttRCTA ,ttczgR=ttczgR ))
+}
+
+#' calculate Div
+#'
+#' @return Div
+#'
+#' @importFrom rBTRdev Compute_gR2
+#' @importFrom dplyr left_join group_by arrange mutate case_when filter count summarise select
+#' @importFrom tidyr spread gather
+#' @importFrom tibble remove_rownames column_to_rownames
+#'
+#' @param param parameters
+#'
+#
+# C_Li <- function( param, clims ){
+#
+#   gParam  <- param[param$modul == "gR",]
+#   microclim <- clims |> dplyr::group_by(DOY) |>
+#     dplyr::summarise( TEM = mean(TEM ,na.rm = T) ,
+#                soilM = mean(soilM ,na.rm = T),
+#                Ls = mean(Ls ,na.rm = T),
+#                VPD = mean(VPD ,na.rm = T),
+#                dL_i = mean(dL_i ,na.rm = T),
+#                Ls = mean(Ls ,na.rm = T)) |>
+#     rBTRdev:::Compute_gR2( gParam)
+#
+#
+# }
+
+#' calculate Litest
+#'
+#' @return Litest
+#'
+#' @importFrom dplyr left_join group_by arrange mutate case_when filter count summarise select
+#' @importFrom tidyr spread gather
+#' @importFrom tibble remove_rownames column_to_rownames
+#' @importFrom mgcv gam
+#'
+#' @param microclim microclim
+#' @param SimTrait SimTrait
+#' @param ObsV ObsV
+#' @param ObsF ObsF
+#' @param InY InY
+#'
+Litest <- function ( microclim, SimTrait ,ObsV,ObsF,InY  ){
+  SimClim <- microclim[  , c('Year', 'DOY','dL_i','L_i.fiber',"L_i.vessel"  )  ] |>
+    dplyr::filter( Year == min( InY )  )
+  SimTraitV <- SimTrait[, c('cell_L','Year', 'VCV','VDDOY','VEDOY', 'RRadDistR' )  ] |>
+    dplyr::filter( !is.na(VCV) ) |> #dplyr::rename(RRadDistR = RRadDistRV) |>
+    dplyr::mutate( DOY = ceiling( VEDOY +  (VDDOY-VEDOY)/2 ) )
+  SimTraitF <- SimTrait[, c('cell_L','Year', 'CV','DDOY','EDOY','RRadDistR'  )  ] |>
+    # dplyr::filter( CV!= 0 , Year %in% ResData$InY) |>
+    dplyr::mutate( DOY = ceiling( EDOY +  (DDOY-EDOY)/2 ) )
+
+  gamV <- mgcv::gam(DOY ~ s(RRadDistR), data = SimTraitV )
+  ObsV <- ObsV[ ObsV$Year %in% InY ,c('Year','TID','LA','RRadDistR')]
+  ObsV$DOY <- predict(gamV ,ObsV )
+
+  gamF <- mgcv::gam(DOY ~  s(RRadDistR), data = SimTraitF )
+  ObsF <- ObsF[ ObsF$Year %in% InY ,c('Year','TID','LA','RRadDistR')]
+  ObsF$DOY <- predict(gamF ,ObsF )
+
+  return( list( SimClim = SimClim ,  SimTraitV=SimTraitV ,SimTraitF = SimTraitF,
+                ObsV = ObsV ,ObsF = ObsF ))
+
+}
+
+
+#' Regression Li parameters
+#'
+#' @return Li parameters
+#'
+#' @importFrom dplyr left_join group_by arrange mutate case_when filter count summarise select
+#' @importFrom tidyr spread gather
+#' @importFrom tibble remove_rownames column_to_rownames
+#' @importFrom mgcv gam
+#' @importFrom nls.multstart nls_multstart
+#'
+#' @param param parameters
+#'
+RegLi <- function(simclim , LineF , LineV , param ){
+
+  params <- param |>
+    dplyr::filter( modul %in% c( "gR"), paramtype == "fixed" ) |>
+    dplyr::select(parameter,values) |>
+    tibble::remove_rownames() |>
+    tibble::column_to_rownames("parameter") |>
+    t() |> as.data.frame( )
+
+  ModL_i <- mgcv::gam(dL_i ~ s( DOY ),data =  simclim)
+
+  LineF <-  dplyr::rename(LineF, DOYold = DOY, DOY = DOYnew)
+  LineV <-  dplyr::rename(LineV, DOYold = DOY, DOY = DOYnew)
+
+  LineF$dL_i <- predict(ModL_i , LineF )
+  LineV$dL_i <- predict(ModL_i , LineV )
+
+  # Pfiber <- nls.multstart::nls_multstart( L_i.fiber ~ a *exp( -exp(b - c * dL_i ))  ,
+  #                                         data = LineF,
+  #                                         iter = 500,
+  #                                         start_lower = c( a= params$a.fiber *0.5, b= params$b.fiber *0.5 , c = params$c.fiber *0.5 ),
+  #                                         start_upper = c( a= params$a.fiber *1.5, b= params$b.fiber *1.5 , c = params$c.fiber *1.5 ) ,
+  #                                         # lower = c( a = -abs( max( as ) ), b = -abs( max( bs ) ) , c = 0 ),
+  #                                         supp_errors = 'Y' )
+
+  Pfiber <- nls( L_i.fiber ~ a *exp( -exp(b - c * dL_i ))  ,
+                 data = LineF,
+                 start =  list( a= params$a.fiber , b= params$b.fiber , c = params$c.fiber ) )
+  LineF$NewLi <- predict(Pfiber,LineF )
+
+  Pvessel <- nls( L_i.vessel ~ a *exp( -exp(b - c * dL_i ))  ,
+                 data = LineV,
+                 start =  list( a= params$a.vessel , b= params$b.vessel , c = params$c.vessel ) )
+  LineV$NewLi <- predict(Pvessel,LineV )
+
+  NewP  <- data.frame( parameter = c( "a.fiber", "b.fiber", "c.fiber","a.vessel", "b.vessel", "c.vessel"),
+                       Nvalues = c( coef( summary(Pfiber) )[1,1] ,coef(summary(Pfiber))[2,1] ,coef(summary(Pfiber))[3,1],
+                                    coef(summary(Pvessel))[1,1] ,coef(summary(Pvessel))[2,1] ,coef(summary(Pvessel))[3,1] )   )
+
+  return( list(NewP = NewP ,LineF =LineF, LineV = LineV ) )
 }
 
 

@@ -123,14 +123,14 @@ Sim_gRs <- function(param,Tage,clims  ){ ## sfRW
       ## line grs
       Ta <- 0:40 + 273.15
       R <- 8.314
-      LgT <- ( Ta * exp( - growth_Param$values[ growth_Param$parameter == 'deltaH_A_Da' ] / ( R * Ta) ) /
-                 (1 + exp( growth_Param$values[ growth_Param$parameter == 'deltaS_D' ] /
-                             R - growth_Param$values[ growth_Param$parameter == 'deltaH_D' ] /(R*Ta) ) ) ) |>
+      LgT <- ( Ta * exp( - param2$values[ param2$parameter == 'deltaH_A_Da' ] / ( R * Ta) ) /
+                 (1 + exp( param2$values[ param2$parameter == 'deltaS_D' ] /
+                             R - param2$values[ param2$parameter == 'deltaH_D' ] /(R*Ta) ) ) ) |>
         nors()
       LgT <- data.frame(TEM = 0:40 ,gT = LgT )
 
-      LgT$LgT[LgT$TEM <= growth_Param$values[ growth_Param$parameter == 'T1' ]|
-                LgT$TEM >= growth_Param$values[ growth_Param$parameter == 'T4' ] ] <- NA
+      LgT$LgT[LgT$TEM <= param2$values[ param2$parameter == 'T1' ]|
+                LgT$TEM >= param2$values[ param2$parameter == 'T4' ] ] <- NA
 
       LgM<- data.frame( SoilM = c(input$M1,input$M2,input$M3,input$M4 ) ,gM = c(0,1,1,0)  )
       LgV<- data.frame( VPD = c(input$VPD1,input$VPD2,input$VPD3,input$VPD4 ) ,gV = c(0,1,1,0)  )

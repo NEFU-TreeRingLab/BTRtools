@@ -28,6 +28,8 @@ Trend_age <-function(dt,... ){
                            textInput("xaxis", "colum of X-axis", "age"),
                            textInput("MRW", "colum of Ring Width", "MRW"),
                            textInput("MaxLA", "colum of Max Lumen area", "MAXLA"),
+                           textInput("CD", "colum of Vessel density", "CD"),
+                           textInput("RCTA", "colum of RCTA", "RCTA"),
 
                            tags$hr(),
                            ## 输入参数
@@ -96,7 +98,7 @@ Trend_age <-function(dt,... ){
 
     observeEvent(input$Sim, {
       ResReg <- RegData( dt = dt ,
-                         Nage = input$xaxis , Nrw = input$MRW, Nla = input$MaxLA,
+                         Nage = input$xaxis , Nrw = input$MRW, Nla = input$MaxLA,Ncd = input$CD,Nrcta = input$RCTA,
                          rwA = input$rwA, rwB = input$rwB, rwC = input$rwC, rwK = input$rwK,
                          laA = input$laA, laB = input$laB, laC = input$laC, laK = input$laK )
 
@@ -113,35 +115,36 @@ Trend_age <-function(dt,... ){
         input$Trw == "EXP" ~ "pExpLa",
         input$Trw == "GAM" ~ "pGamLa",
         input$Trw == "Manual" ~ "mExpLa")
-      Tab1Val$Trend <- dplyr::left_join(Tab1Val$dtNor |> dplyr::select(all_of(  c('Year','Age',ccrw,ccla ))) |>
-        dplyr::rename( setNames( c('Year','Age',ccrw,ccla ), c('Year','Age','Tage','Lage'  ))),
-        Tab1Val$dtOri |> dplyr::select(all_of(  c('Year','Age',"MRW",ccrw,ccla ))) |>
-          dplyr::rename( setNames( c('Year','Age',"MRW",ccrw,ccla ), c('Year','Age',"MRW",'TageOri','LageOri'  )))
-        )  |> dplyr::mutate( Frw =  MRW - TageOri ,sFrw = scale(Frw) )
+      Tab1Val$Trend <- dplyr::left_join(Tab1Val$dtNor |> dplyr::select(all_of(  c('Year','age',ccrw,ccla ))) |>
+                                          dplyr::rename( setNames( c('Year','age',ccrw,ccla ), c('Year','age','Tage','Lage'  ))),
+                                        Tab1Val$dtOri |> dplyr::select(all_of(  c('Year','age',"MRW",'MaxLA','CD','RCTA',ccrw,ccla ))) |>
+                                          dplyr::rename( setNames( c('Year','age',"MRW",'MaxLA','CD','RCTA',ccrw,ccla ),
+                                                                   c('Year','age',"MRW",'MaxLA','CD','RCTA','TageOri','LageOri'  )))
+      )  |> dplyr::mutate( Frw =  MRW - TageOri ,sFrw = scale(Frw) )
 
       output$RegFig <- renderPlot({
-        dtRegSum <- ResReg$dtOri |> dplyr::select(Age,MRW,pGamRw,pExpRw,mExpRw) |> dplyr::mutate(Name = "RW", type = "Regression", .after = Age ) |>
-          dplyr::rename(setNames( c('Age','MRW','pGamRw','pExpRw','mExpRw' ),c('Age','Obs','GAM','EXP','Manu' )) )
-        dtRegSum <- ResReg$dtOri |> dplyr::select(Age,MaxLA,pGamLa,pExpLa, mExpLa)|> dplyr::mutate(Name = "MaxLA", type = "Regression", .after = Age) |>
-          dplyr::rename(setNames( c('Age','MaxLA','pGamLa','pExpLa','mExpLa' ),c('Age','Obs','GAM','EXP','Manu' )))  |>
+        dtRegSum <- ResReg$dtOri |> dplyr::select(age,MRW,pGamRw,pExpRw,mExpRw) |> dplyr::mutate(Name = "RW", type = "Regression", .after = age ) |>
+          dplyr::rename(setNames( c('age','MRW','pGamRw','pExpRw','mExpRw' ),c('age','Obs','GAM','EXP','Manu' )) )
+        dtRegSum <- ResReg$dtOri |> dplyr::select(age,MaxLA,pGamLa,pExpLa, mExpLa)|> dplyr::mutate(Name = "MaxLA", type = "Regression", .after = age) |>
+          dplyr::rename(setNames( c('age','MaxLA','pGamLa','pExpLa','mExpLa' ),c('age','Obs','GAM','EXP','Manu' )))  |>
           dplyr::bind_rows(dtRegSum)
-        dtRegSum <- ResReg$dtNor |> dplyr::select(Age,pGamRw,pExpRw,mExpRw) |> dplyr::mutate(Name = "RW", type = "Trend line", .after = Age ) |>
-          dplyr::rename(setNames( c('Age','pGamRw','pExpRw','mExpRw' ),c('Age','GAM','EXP','Manu' )) ) |>
+        dtRegSum <- ResReg$dtNor |> dplyr::select(age,pGamRw,pExpRw,mExpRw) |> dplyr::mutate(Name = "RW", type = "Trend line", .after = age ) |>
+          dplyr::rename(setNames( c('age','pGamRw','pExpRw','mExpRw' ),c('age','GAM','EXP','Manu' )) ) |>
           dplyr::bind_rows(dtRegSum)
-        dtRegSum <- ResReg$dtNor |> dplyr::select(Age,pGamLa,pExpLa, mExpLa)|> dplyr::mutate(Name = "MaxLA", type = "Trend line", .after = Age) |>
-          dplyr::rename(setNames( c('Age','pGamLa','pExpLa','mExpLa' ),c('Age','GAM','EXP','Manu' )))  |>
+        dtRegSum <- ResReg$dtNor |> dplyr::select(age,pGamLa,pExpLa, mExpLa)|> dplyr::mutate(Name = "MaxLA", type = "Trend line", .after = age) |>
+          dplyr::rename(setNames( c('age','pGamLa','pExpLa','mExpLa' ),c('age','GAM','EXP','Manu' )))  |>
           dplyr::bind_rows(dtRegSum) |> tidyr::gather(key, val , c(-1:-3)) |> na.omit()
 
         ggplot2::ggplot(dtRegSum ) + ## x = "age1", y = 'MRW'
           ggplot2::theme_light()+
           ggplot2::labs(title = "sim",
                # subtitle = paste( 'k = ', input$knots, '| α = ', alphat, " β = " ,  betat, " c = ",ct, ExpRes ),
-               x = 'Age', y = 'Value'
+               x = 'age', y = 'Value'
           )+
           ggplot2::theme(legend.position = "bottom")+
           # scale_y_continuous( limits = c(0 , 1.1*max(dt$y))    )+
-          ggplot2::geom_point(ggplot2::aes(x= Age, y = val ,color = "Obs" ), data = dtRegSum[ dtRegSum$key == "Obs",])+
-          ggplot2::geom_line(ggplot2::aes(x= Age, y = val , color = key))+
+          ggplot2::geom_point(ggplot2::aes(x= age, y = val ,color = "Obs" ), data = dtRegSum[ dtRegSum$key == "Obs",])+
+          ggplot2::geom_line(ggplot2::aes(x= age, y = val , color = key))+
           ggplot2::facet_wrap(factor(Name,levels = c('RW', 'MaxLA') )  ~ type, scales = "free")
 
       }) # RegFig end
