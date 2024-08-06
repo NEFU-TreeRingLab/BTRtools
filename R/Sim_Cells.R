@@ -19,7 +19,7 @@
 Sim_Cells <- function(ObsV =NULL ,ObsF=NULL , param,...) {
 
   ## 整理细胞参数
-  Obs <- rbind( dplyr::mutate( ObsV, type = "Vessel" ) ,dplyr::mutate( ObsF, type = "Fiber" )  )
+  Obs <- dplyr::bind_rows( dplyr::mutate( ObsV, type = "Vessel" ) ,dplyr::mutate( ObsF, type = "Fiber" )  )
   Obst <- Obs[  Obs$RRadDistR<= 20| Obs$RRadDistR >= 20 ,c('Year','RRadDistR','type','TID','LA',"CWTall" ) ]|>
     dplyr::mutate( EL = dplyr::case_when(RRadDistR<= 20~ "Ew", RRadDistR > 20 ~"Lw" ) ,
                    CWTall = dplyr::case_when(CWTall <=0 ~ NA , CWTall > 0 ~ CWTall ) ) |>
@@ -315,7 +315,7 @@ Sim_Cells <- function(ObsV =NULL ,ObsF=NULL , param,...) {
 }
 # library(shiny)
 
-Sim_Cells(ObsV = ObsV, ObsF = ObsF,  param = param)
+# Sim_Cells(ObsV = ObsV, ObsF = ObsF,  param = param)
 
 
 

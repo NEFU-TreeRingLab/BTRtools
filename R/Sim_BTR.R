@@ -167,9 +167,9 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
 
      column(  #col output 1 ####
        width = 4,
-       plotOutput("RegFigGrs",height = "600px"),
+       plotOutput("RegFigGrs",height = "700px"),
        plotOutput('RegFigDiv',height = "200px"),
-       plotOutput("RegFigLis"),
+       plotOutput("RegFigLis",height = "500px"),
 
      ), # col output1 end ####
      column(  #col output 2 ####
@@ -259,7 +259,7 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
           ggplot2::labs(subtitle = "gVPD" )+
           # ggplot2::scale_color_manual(values = c("royalblue","red","orange"))+
           ggplot2::geom_line( ggplot2::aes(x = VPD, y = gV ))
-        ,nrow = 1 #, align = "v"
+        ,nrow = 2 #, align = "v"
       )
 
       ggpubr::ggarrange(
@@ -328,7 +328,7 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
       ObsVt <- SimData$ObsV[SimData$ObsV$Year %in% c(StartY:EndY ),]
 
 
-      ResData$result <-  rBTRdev::btr_parallel( clim = climst ,parameters = param , age = Taget,
+      ResData$result <-  rBTRdev::btr_parallel( clim = climst ,parameters = SimData$param , age = Taget,
                                syear = StartY  ,eyear = EndY , Cores = input$Cores, writeRes = F)
 
       ResRings <- ResData$result$annaulRing |>
@@ -533,6 +533,9 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
         )
 
 
+      } else{
+        ggplot2::ggplot()+
+          ggplot2::labs(title = "Waite Sim BTR")
       }## if end -------
     })
 
@@ -544,5 +547,5 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
 
 }
 
-sim_btr(param = param,clims =  clims,Tage = Tage, ObsF = ObsF ,ObsV = ObsV )
+# sim_btr(param = param,clims =  clims,Tage = Tage, ObsF = ObsF ,ObsV = ObsV )
 
