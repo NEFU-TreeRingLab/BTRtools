@@ -498,6 +498,8 @@ Litest <- function ( microclim, SimTrait ,ObsV,ObsF,InY  ){
 #' @importFrom tibble remove_rownames column_to_rownames
 #' @importFrom mgcv gam
 #' @importFrom nls.multstart nls_multstart
+#' @importFrom stats as.formula coef na.omit nls predict setNames
+#' @importFrom utils head write.csv
 #'
 #' @param param parameters
 #'
@@ -512,8 +514,10 @@ RegLi <- function(simclim , LineF , LineV , param ){
 
   ModL_i <- mgcv::gam(dL_i ~ s( DOY ),data =  simclim)
 
-  LineF <-  dplyr::rename(LineF, DOYold = DOY, DOY = DOYnew)
-  LineV <-  dplyr::rename(LineV, DOYold = DOY, DOY = DOYnew)
+  LineF <-  dplyr::rename(LineF, DOYold = DOY, DOY = DOYnew,
+                          OldL_i.fiber = L_i.fiber , L_i.fiber = NewL_i.fiber)
+  LineV <-  dplyr::rename(LineV, DOYold = DOY, DOY = DOYnew,
+                          OldL_i.vessel = L_i.vessel , L_i.vessel = NewL_i.vessel)
 
   LineF$dL_i <- predict(ModL_i , LineF )
   LineV$dL_i <- predict(ModL_i , LineV )

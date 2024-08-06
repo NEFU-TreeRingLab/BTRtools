@@ -259,7 +259,7 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
           ggplot2::labs(subtitle = "gVPD" )+
           # ggplot2::scale_color_manual(values = c("royalblue","red","orange"))+
           ggplot2::geom_line( ggplot2::aes(x = VPD, y = gV ))
-        ,nrow = 2 #, align = "v"
+        ,nrow = 1 #, align = "v"
       )
 
       ggpubr::ggarrange(
@@ -473,6 +473,8 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
         dFEA = input$MaxLiDoyF - max(LineF$DOY[ LineF$type == "EA" ])
         dFLA = input$MinLiDoyF - min(LineF$DOY[ LineF$type == "LA" ])
         dFDOY = nrow(LineF[ LineF$type == "TA", ])
+        RRdliF <- input$MaxLi.fiber/ max(LineF$L_i.fiber)
+        LineF$NewL_i.fiber <- LineF$L_i.fiber * RRdliF
         LineF$DOYnew[ LineF$type == "EA" ] <- LineF$DOYnew[ LineF$type == "EA" ] + dFEA
         LineF$DOYnew[ LineF$type == "LA" ] <- LineF$DOYnew[ LineF$type == "LA" ] + dFLA
         LineF$DOYnew[ LineF$type == "TA" ] <- input$MaxLiDoyF + ((input$MinLiDoyF -input$MaxLiDoyF )/dFDOY) * c(1:dFDOY)
@@ -480,6 +482,8 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
         dVEA = input$MaxLiDoyV - max(LineV$DOY[ LineV$type == "EA" ])
         dVLA = input$MinLiDoyV - min(LineV$DOY[ LineV$type == "LA" ])
         dVDOY = nrow(LineV[ LineV$type == "TA", ])
+        RRdliV <- input$MaxLi.vessel/ max(LineF$L_i.vessel)
+        LineF$NewL_i.vessel <- LineF$L_i.vessel * RRdliV
         LineV$DOYnew[ LineV$type == "EA" ] <- LineV$DOYnew[ LineV$type == "EA" ] + dVEA
         LineV$DOYnew[ LineV$type == "LA" ] <- LineV$DOYnew[ LineV$type == "LA" ] + dVLA
         LineV$DOYnew[ LineV$type == "TA" ] <- input$MaxLiDoyV + ((input$MinLiDoyV -input$MaxLiDoyV )/dVDOY) * c(1:dVDOY)
@@ -512,7 +516,7 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
                               color = "red" )+
           ggplot2::geom_line( ggplot2::aes( x = DOY, y = - NewLi    ),
                                color = "pink", linewidth = 1.5 )+
-          ggplot2::geom_line( ggplot2::aes( x = DOYold , y = -L_i.fiber    ), color = "#0047AB" )
+          ggplot2::geom_line( ggplot2::aes( x = DOYold , y = -OldL_i.fiber    ), color = "#0047AB" )
         ,
         ggplot2::ggplot( ResData$tLiRes$SimTraitV )+
           ggplot2::scale_x_continuous(limits = c(90,300))+
@@ -528,7 +532,7 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
                                color = "red" )+
           ggplot2::geom_line( ggplot2::aes( x = DOY, y = - NewLi    ),
                               color = "pink", linewidth = 1.5 )+
-          ggplot2::geom_line( ggplot2::aes( x = DOYold , y = -L_i.vessel    ), color = "#0047AB" )
+          ggplot2::geom_line( ggplot2::aes( x = DOYold , y = -OldL_i.vessel    ), color = "#0047AB" )
         ,ncol =1 ,align = 'hv'
         )
 

@@ -29,7 +29,7 @@ Sim_Cells <- function(ObsV =NULL ,ObsF=NULL , param,...) {
   ui <- fluidPage( ### ui ####
     titlePanel( "Simulate Fiber & Vessel Growth Parameters"),
               column( ## col 2.1 细胞初始参数 ####
-                2,
+                1,
                 wellPanel( ## 灰色底 panel
                   h4("Photoperiod promotion rate"),
                   sliderInput("fgRLi",
@@ -67,7 +67,7 @@ Sim_Cells <- function(ObsV =NULL ,ObsF=NULL , param,...) {
               ), ## col 2.1 end ----
 
               column( ## col 2.2 细胞初始参数 ####
-                2,
+                1,
                 wellPanel( ## 灰色底 panel
                   h4( "Specific fiber growth rate" ),
                   numericInput("va_c.fiber", "Fiber enlargement rate",param$values[param$parameter == "va_c.fiber" & param$modul == "division" ],
@@ -101,7 +101,7 @@ Sim_Cells <- function(ObsV =NULL ,ObsF=NULL , param,...) {
               ), ## col 2.2 end ---
 
               column( ## col 2.3 细胞初始参数
-                2,
+                1,
                 wellPanel( ## 灰色底 panel
                   h4( "Specific vessel growth rate" ),
                   numericInput("va_c.vessel", "Vessel enlargement rate",param$values[param$parameter == "va_c.vessel"& param$modul == "division" ],
@@ -134,9 +134,9 @@ Sim_Cells <- function(ObsV =NULL ,ObsF=NULL , param,...) {
               ), ## col 2.3 end -----
               # 输出部分：显示图表
             column( ## Tab 2 output
-              6,
+              9,
                 # tableOutput("result"),
-                plotOutput("RegFigCell",height = "600px"),
+                plotOutput("RegFigCell",height = "900px"),
                 # tableOutput("result")
                 plotOutput("supplot",height = "500px")
               ) ## mainPanel end --
