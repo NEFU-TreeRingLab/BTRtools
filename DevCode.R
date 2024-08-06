@@ -143,6 +143,8 @@ input$MaxLiDoyF <- 120
 input$MaxLiDoyV <- 130
 input$MinLiDoyF <- 190
 input$MinLiDoyV <- 200
+input$MaxLi.fiber <- NA
+input$MaxLi.vessel <- 0.1
 
 
 SimData <- list(

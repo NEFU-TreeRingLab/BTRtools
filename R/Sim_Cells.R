@@ -20,8 +20,10 @@ Sim_Cells <- function(ObsV =NULL ,ObsF=NULL , param,...) {
 
   ## 整理细胞参数
   Obs <- dplyr::bind_rows( dplyr::mutate( ObsV, type = "Vessel" ) ,dplyr::mutate( ObsF, type = "Fiber" )  )
-  Obst <- Obs[  Obs$RRadDistR<= 20| Obs$RRadDistR >= 20 ,c('Year','RRadDistR','type','TID','LA',"CWTall" ) ]|>
-    dplyr::mutate( EL = dplyr::case_when(RRadDistR<= 20~ "Ew", RRadDistR > 20 ~"Lw" ) ,
+  Obst <- #Obs[  Obs$RRadDistR<= 20| Obs$RRadDistR >= 75 | Obs$RRadDistR >=35 | Obs$RRadDistR <= 55  ,c('Year','RRadDistR','type','TID','LA',"CWTall" ) ]|>
+    dplyr::filter(Obs , RRadDistR<= 20| RRadDistR >= 75 | RRadDistR >=35 & RRadDistR <= 55) |>
+    dplyr::select( Year,RRadDistR,type,TID,LA,CWTall ) |>
+    dplyr::mutate( EL = dplyr::case_when(RRadDistR<= 20~ "Ew", RRadDistR >= 75 ~"Lw" ,  RRadDistR >=35 & RRadDistR <= 55 ~ 'Tw'  ) ,
                    CWTall = dplyr::case_when(CWTall <=0 ~ NA , CWTall > 0 ~ CWTall ) ) |>
     dplyr::group_by(Year,EL,type,TID) |> dplyr::summarise(LA = mean(LA,na.rm = T),CWT = mean(CWTall,na.rm = T)  )
 
@@ -29,7 +31,7 @@ Sim_Cells <- function(ObsV =NULL ,ObsF=NULL , param,...) {
   ui <- fluidPage( ### ui ####
     titlePanel( "Simulate Fiber & Vessel Growth Parameters"),
               column( ## col 2.1 细胞初始参数 ####
-                1,
+                2,
                 wellPanel( ## 灰色底 panel
                   h4("Photoperiod promotion rate"),
                   sliderInput("fgRLi",
@@ -134,7 +136,7 @@ Sim_Cells <- function(ObsV =NULL ,ObsF=NULL , param,...) {
               ), ## col 2.3 end -----
               # 输出部分：显示图表
             column( ## Tab 2 output
-              9,
+              8,
                 # tableOutput("result"),
                 plotOutput("RegFigCell",height = "900px"),
                 # tableOutput("result")
@@ -186,10 +188,13 @@ Sim_Cells <- function(ObsV =NULL ,ObsF=NULL , param,...) {
 
       ## 模拟细胞大小 ####
 
-      ELwCell <- rbind(  CellGrwothData(param2,wgR = 1, dry = input$dry, fgRLi = 0,vgRLi = 0)|>
-        dplyr::mutate(EL = "Earlywood") ,
-                  CellGrwothData(param2,wgR = 0.2, dry = input$dry, fgRLi = input$fgRLi,vgRLi = input$vgRLi)|>
-        dplyr::mutate(EL = "Latewood")   ) |> dplyr::select(Day,CA, CV,  DDOY,  EDOY,LWA , TDOY,WA,WT,type,EL) |>
+      ELwCell <- rbind( CellGrwothData(param2,wgR = 0.65, dry = input$dry, fgRLi = 0,vgRLi = 0)|>
+                          dplyr::mutate(EL = "May traits") ,
+                        CellGrwothData(param2,wgR = 1, dry = input$dry, fgRLi = 0,vgRLi = 0 )|>
+                          dplyr::mutate(EL = "July traits") ,
+                        CellGrwothData(param2,wgR = 0.1, dry = input$dry, fgRLi = input$fgRLi,vgRLi = input$vgRLi)|>
+                          dplyr::mutate(EL = "Sept. traits") ) |>
+        dplyr::select(Day,CA, CV,  DDOY,  EDOY,LWA , TDOY,WA,WT,type,EL) |>
         dplyr::distinct(CA, CV,  DDOY,  EDOY,LWA , TDOY,WA,WT,type,EL, .keep_all = TRUE)
       ## 计算早晚材细胞大小 Ew = RRadDistR[5,20] , Lw = RRadDistR[75,90] ####
         Obs <- Adata$Obst
@@ -215,10 +220,10 @@ Sim_Cells <- function(ObsV =NULL ,ObsF=NULL , param,...) {
         ggplot2::theme(legend.position = "top")+
         ggplot2::labs(title = "Cell Growth", x = 'Day', y = 'cellsize')+
         ggplot2::geom_line( ggplot2::aes(x = Day ,y = val,color = key ) )+
-        ggplot2::facet_wrap( EL ~ type,scale="free")
+        ggplot2::facet_wrap( type ~ factor(EL, levels = c('May traits',"July traits","Sept. traits")  ) ,scale="free")
       ,
-      Obs |> tidyr::gather(key ,val , c( LA  ,  CWT )) |> na.omit() |>
-        dplyr::mutate(EL =  factor(EL,levels = c("Ew",'Lw'),labels = c('Earlywood',"Latewood"))) |>
+      Obst |> tidyr::gather(key ,val , c( LA  ,  CWT )) |> na.omit() |>
+        dplyr::mutate(EL =  factor(EL,levels = c("Ew","Tw",'Lw'),labels = c('May traits',"July traits","Sept. traits"))) |>
         ggplot2::ggplot()+
         ggplot2::theme_bw()+
         ggplot2::labs(title = "Cell Size", x = 'ELw', y = 'cell size')+

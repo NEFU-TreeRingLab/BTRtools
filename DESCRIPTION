@@ -1,6 +1,6 @@
 Package: BTRtools
 Title: BTRmodel tools
-Version: 0.1.0.240805
+Version: 0.1.0.240806
 Authors@R: 
     person("Binqing", "Zhao", , "zhaobinqing92@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
