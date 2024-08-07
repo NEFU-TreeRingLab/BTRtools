@@ -79,8 +79,13 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
        numericInput("deltaS_D", "ΔSd", param$values[param$parameter == 'deltaS_D'  ],
                     min = 0 , max = Inf , step = 1), ##
 
+
+
+       # tags$hr(),
+       # Button
+       # actionButton("Sim", "Run BTR model"),
        tags$hr(),
-       actionButton("Sim", "Run BTR model")
+       downloadButton("downloadParam", "Download Param")
 
 
      ), # end c1 -----
@@ -156,11 +161,9 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
                    max = 32,
                    step = 1,
                    value = 12 ),
-       # tags$hr(),
-       # Button
-       # actionButton("Sim", "Run BTR model"),
        tags$hr(),
-       downloadButton("downloadParam", "Download Parameters")
+       actionButton("Sim", "Run BTR model"),
+
      ),# end c3.2 ----
 
 
@@ -170,6 +173,8 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
        plotOutput("RegFigGrs",height = "700px"),
        plotOutput('RegFigDiv',height = "200px"),
        plotOutput("RegFigLis",height = "500px"),
+       plotOutput("RegFigSimLi",height = "200px"),
+
 
      ), # col output1 end ####
      column(  #col output 2 ####
@@ -491,28 +496,15 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
         LineV$DOYnew[ LineV$type == "LA" ] <- LineV$DOYnew[ LineV$type == "LA" ] + dVLA
         LineV$DOYnew[ LineV$type == "TA" ] <- input$MaxLiDoyV + ((input$MinLiDoyV -input$MaxLiDoyV )/dVDOY) * c(1:dVDOY)
 
+        SimData$Line <- list(LineF=LineF, LineV =LineV)
 
-        ## 更新数据 ####
-        if (any( dFEA!=0, dFLA !=0 , RRdliF != 1,
-                 dVEA!=0, dVLA !=0 , RRdliV != 1 ) ) {
+          ## 更新数据
           param2 <- SimData$param
-          # NewP  <- data.frame(   parameter = c( "va_cz", "alpha_cz", "beta_cz",
-          #                                       'deltaD', "a1", "a2", "Div_alpha","maxRCTA","RCTADivT"),
-          #                        Nvalues = c( input$va_cz ,input$alpha_cz ,input$beta_cz ,
-          #                                     input$deltaD , input$a1, input$a2  , input$Div_alpha,input$maxRCTA,input$RCTADivT)   )
 
-          NewLip <- RegLi( simclim = ResData$tLiRes$SimClim, LineF = LineF , LineV = LineV , param = param2  )
+          NewLip <- RegLi( simclim = ResData$tLiRes$SimClim, LineF = SimData$Line$LineF , LineV = SimData$Line$LineV , param = param2  )
 
           param2 <- AupdatedB(DataA = NewLip$NewP,DataB = param2,ons = 'parameter' )
           SimData$param <- param2
-
-        LineF <- NewLip$LineF
-        LineV <- NewLip$LineV
-
-        }else{
-          LineF <- dplyr::mutate(LineF,NewLi = NA,OldL_i.fiber = L_i.fiber,DOYold=DOY )
-          LineV <- dplyr::mutate(LineV,NewLi = NA,OldL_i.vessel = L_i.vessel,DOYold=DOY )
-        }
 
         ggpubr::ggarrange(
         ggplot2::ggplot( ResData$tLiRes$SimTraitF )+
@@ -523,10 +515,10 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
           ggplot2::geom_point( ggplot2::aes( x = DOY , y = CV ),color = "orange" ,shape=2,alpha=0.4  )+
           ggplot2::geom_smooth( ggplot2::aes( x = DOY , y = CV),method = 'gam',se=F,color = "orange" ,linewidth = 2)
         ,
-        ggplot2::ggplot( LineF )+
+        ggplot2::ggplot( NewLip$LineF )+
           # ggplot2::labs(subtitle = paste( "a=", NewLip$NewP[1,2],"b=",NewLip$NewP[2,2],'c=',NewLip$NewP[3,2]   ))+
           ggplot2::scale_x_continuous(limits = c(90,300))+
-          ggplot2::geom_point( ggplot2::aes( x = DOY, y = -L_i.fiber    ),
+          ggplot2::geom_point( ggplot2::aes( x = DOY, y = -L_i.fiber  ),
                               color = "red" )+
           ggplot2::geom_line( ggplot2::aes( x = DOY, y = - NewLi    ),
                                color = "pink", linewidth = 1.5 )+
@@ -540,7 +532,7 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
           ggplot2::geom_point( ggplot2::aes( x = DOY , y = VCV ),color = "orange",shape= 2  )+
           ggplot2::geom_smooth( ggplot2::aes( x = DOY , y = VCV),method = 'gam',se=F,color = "orange" ,linewidth = 2 )
         ,
-        ggplot2::ggplot( LineV )+
+        ggplot2::ggplot( NewLip$LineV )+
           ggplot2::scale_x_continuous(limits = c(90,300))+
           # ggplot2::labs(subtitle = paste( "a=", NewLip$NewP[4,2],"b=",NewLip$NewP[5,2],'c=',NewLip$NewP[6,2]   ))+
           ggplot2::geom_point( ggplot2::aes( x = DOY, y = -L_i.vessel    ),
@@ -559,6 +551,41 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
 
 
     })
+
+    # observeEvent(input$SimLi, { ## 点击SimLi ####
+    # output$RegFigSimLi  <- renderPlot({
+    #   ## 更新数据 ####
+    #
+    #   param2 <- SimData$param
+    #
+    #   NewLip <- RegLi( simclim = ResData$tLiRes$SimClim, LineF = SimData$Line$LineF , LineV = SimData$Line$LineV , param = param2  )
+    #
+    #   param2 <- AupdatedB(DataA = NewLip$NewP,DataB = param2,ons = 'parameter' )
+    #   SimData$param <- param2
+    #
+    #   # output$RegFigSimLi  <- renderPlot({
+    #   ggpubr::ggarrange(
+    #     ggplot2::ggplot( NewLip$LineV )+
+    #       # ggplot2::labs(subtitle = paste( "a=", NewLip$NewP[1,2],"b=",NewLip$NewP[2,2],'c=',NewLip$NewP[3,2]   ))+
+    #       ggplot2::scale_x_continuous(limits = c(90,300))+
+    #       ggplot2::geom_point( ggplot2::aes( x = DOYnew, y = -L_i.fiber    ),
+    #                            color = "red" )+
+    #       ggplot2::geom_line( ggplot2::aes( x = DOY, y = -NewLi    ),
+    #                            color = "pink", linewidth = 1.5 )
+    #     ,
+    #     ggplot2::ggplot( NewLip$LineV )+
+    #       ggplot2::scale_x_continuous(limits = c(90,300))+
+    #       # ggplot2::labs(subtitle = paste( "a=", NewLip$NewP[4,2],"b=",NewLip$NewP[5,2],'c=',NewLip$NewP[6,2]   ))+
+    #       ggplot2::geom_point( ggplot2::aes( x = DOY, y = -L_i.vessel    ),
+    #                            color = "red" )+
+    #       ggplot2::geom_line( ggplot2::aes( x = DOY, y = -NewLi    ),
+    #                           color = "pink", linewidth = 1.5 )
+    #
+    #     ,ncol=2,align = 'hv'
+    #   )
+    #   # })
+    #
+    # })
 
     # Downloadable csv of selected dataset ----
     output$downloadParam <- downloadHandler(

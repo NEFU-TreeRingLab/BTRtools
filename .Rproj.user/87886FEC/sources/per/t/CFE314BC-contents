@@ -22,7 +22,7 @@ usethis::use_r("Sim_BTR")
 # usethis::use_package("tibble")
 # usethis::use_package("tidyr")
 # usethis::use_mit_license()
-
+setwd( "D:/R_Github/BTRtools")
 devtools::document()
 
 devtools::check()
@@ -140,9 +140,11 @@ input$eyear <- 2020
 input$Cores <- 12
 
 input$MaxLiDoyF <- 120
-input$MaxLiDoyV <- 130
+input$MaxLiDoyV <- 186
 input$MinLiDoyF <- 190
-input$MinLiDoyV <- 200
+input$MinLiDoyV <- 236
+input$MaxLi.fiber <- NA
+input$MaxLi.vessel <- 0.1
 
 
 SimData <- list(

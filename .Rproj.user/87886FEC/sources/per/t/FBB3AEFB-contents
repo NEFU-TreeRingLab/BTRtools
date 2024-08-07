@@ -530,19 +530,37 @@ RegLi <- function(simclim , LineF , LineV , param ){
   #                                         # lower = c( a = -abs( max( as ) ), b = -abs( max( bs ) ) , c = 0 ),
   #                                         supp_errors = 'Y' )
 
-  Pfiber <- nls( L_i.fiber ~ a *exp( -exp(b - c * dL_i ))  ,
+  Pfiber <- tryCatch({
+    nls( L_i.fiber ~ a *exp( -exp(b - c * dL_i ))  ,
                  data = LineF,
-                 start =  list( a= params$a.fiber , b= params$b.fiber , c = params$c.fiber ) )
-  LineF$NewLi <- predict(Pfiber,LineF )
+                 start =  list( a= params$a.fiber , b= params$b.fiber , c = params$c.fiber ) ) |>
+      summary() |> coef()
+  }, error = function(e){
+    data.frame( param = c(params$a.fiber, params$b.fiber, params$c.fiber ) ,n = c('a','b','c')  )
+  } , waring = function(w){
+    data.frame( param = c(params$a.fiber, params$b.fiber, params$c.fiber ) ,n = c('a','b','c')  )
+  } )
 
-  Pvessel <- nls( L_i.vessel ~ a *exp( -exp(b - c * dL_i ))  ,
+  Pvessel <- tryCatch(
+    {nls( L_i.vessel ~ a *exp( -exp(b - c * dL_i ))  ,
                  data = LineV,
-                 start =  list( a= params$a.vessel , b= params$b.vessel , c = params$c.vessel ) )
-  LineV$NewLi <- predict(Pvessel,LineV )
+                 start =  list( a= params$a.vessel , b= params$b.vessel , c = params$c.vessel ) ) |>
+        summary() |> coef()
+    }, error = function(e){
+      data.frame( param = c(params$a.fiber, params$b.fiber, params$c.fiber ) ,n = c('a','b','c')  )
+    } , waring = function(w){
+      data.frame( param = c(params$a.fiber, params$b.fiber, params$c.fiber ) ,n = c('a','b','c')  )
+    } )
+
+  # LineV$NewLi <- predict(Pvessel,LineV )
 
   NewP  <- data.frame( parameter = c( "a.fiber", "b.fiber", "c.fiber","a.vessel", "b.vessel", "c.vessel"),
-                       Nvalues = c( coef( summary(Pfiber) )[1,1] ,coef(summary(Pfiber))[2,1] ,coef(summary(Pfiber))[3,1],
-                                    coef(summary(Pvessel))[1,1] ,coef(summary(Pvessel))[2,1] ,coef(summary(Pvessel))[3,1] )   )
+                       Nvalues = c( Pfiber[1,1] ,Pfiber[2,1] ,Pfiber[3,1],
+                                    Pvessel[1,1] ,Pvessel[2,1] ,Pvessel[3,1] )   )
+
+  LineF$NewLi <- NewP[1,2] *exp( -exp(NewP[2,2] - NewP[3,2] * LineF$dL_i ) )
+  LineV$NewLi <- NewP[4,2] *exp( -exp(NewP[5,2] - NewP[6,2] * LineF$dL_i ) )
+
 
   return( list(NewP = NewP ,LineF =LineF, LineV = LineV ) )
 }
