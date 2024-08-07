@@ -35,6 +35,8 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
   # obsF <- obsF[obsF$Year %in% c(StartY:EndY ),]
   # obsV <- obsF[obsF$Year %in% c(StartY:EndY ),]
 
+  CLines <- CellLine(ObsV = ObsV,ObsF = ObsF )
+
   ui <- fluidPage( ## ui ####
      titlePanel( "Simulate BTR model"),
      column( ## col 1 ####
@@ -62,6 +64,8 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
        numericInput("maxRCTA", "maxRCTA",param$values[param$parameter == "maxRCTA"],
                     min = -Inf , max = Inf,step = 0.1 ), ##
        numericInput("RCTADivT", "RCTADivT minVF/maxVF",param$values[param$parameter == "RCTADivT"],
+                    min = -Inf , max = Inf,step = 0.1 ), ##
+       numericInput("LAtoDiv", "Trend LA to dD",param$values[param$parameter == "LAtoDiv"],
                     min = -Inf , max = Inf,step = 0.1 ), ##
 
 
@@ -194,7 +198,8 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
       clims = as.data.frame(clims),
       Tage = as.data.frame(Tage),
       ObsF = as.data.frame(ObsF),
-      ObsV = as.data.frame(ObsV)
+      ObsV = as.data.frame(ObsV),
+      CLines = CLines
     )
 
     ResData <- reactiveValues( )
@@ -294,9 +299,9 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
       ## 更新数据
       param2 <- SimData$param
       NewP  <- data.frame(   parameter = c( "va_cz", "alpha_cz", "beta_cz",
-                                            'deltaD', "a1", "a2", "Div_alpha","maxRCTA","RCTADivT"),
-                             Nvalues = c( input$va_cz ,input$alpha_cz ,input$beta_cz ,
-                                          input$deltaD , input$a1, input$a2  , input$Div_alpha,input$maxRCTA,input$RCTADivT)   )
+                                            'deltaD', "a1", "a2", "Div_alpha","maxRCTA","RCTADivT",'LAtoDiv'),
+                             Nvalues = c( input$va_cz,input$alpha_cz,input$beta_cz,input$deltaD,input$a1,input$a2,
+                                          input$Div_alpha,input$maxRCTA,input$RCTADivT,input$LAtoDiv)   )
 
       param2 <- AupdatedB(DataA = NewP,DataB = param2,ons = 'parameter' )
       SimData$param <- param2
@@ -373,7 +378,10 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
       ifelse( length( InY ) <= 5, InY,  InY  <- sample(InY,size = 5, replace = FALSE) )
 
       # ResData$InY <- InY
-
+      FLine2 <- SimData$CLines$Fline2[ SimData$CLines$Fline2$Year %in% InY, ]
+      FLine3 <- SimData$CLines$Fline3[ SimData$CLines$Fline3$Year %in% InY, ]
+      VLine2 <- SimData$CLines$Vline2[ SimData$CLines$Vline2$Year %in% InY, ]
+      VLine3 <- SimData$CLines$Vline3[ SimData$CLines$Vline3$Year %in% InY, ]
 
 
       SimTrait <- dplyr::left_join( ResData$result$xylem_trait,  ResData$result$annaulRing[ ,c( 'Year',"RingWidth")  ]  ) |>
@@ -386,12 +394,14 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
         ggplot2::theme_bw()+
         ggplot2::labs( title = "Vessel lumen area")+
         ggplot2:: scale_color_manual( values = c( "gray80", 'gray40', "orange" ), breaks = c( "ObsTID", "Obs","Sim")  )+
-        ggplot2::geom_smooth(data =  SimData$ObsV[ SimData$ObsV$Year %in% InY , ],
-                             ggplot2::aes(x = RRadDistR , y =LA , color = "ObsTID" , group = TID ),
-                             method = "gam",se=F ,formula = y~s(x , k = 4)   )+
-        ggplot2::geom_smooth(data =  SimData$ObsV[ SimData$ObsV$Year %in% InY , ],
-                             ggplot2::aes(x = RRadDistR , y =LA , color = "Obs" ),
-                             method = "gam",se=F ,formula = y~s(x , k = 4)     )+
+        # ggplot2::geom_smooth(data =  SimData$ObsV[ SimData$ObsV$Year %in% InY , ],
+        #                      ggplot2::aes(x = RRadDistR , y =LA , color = "ObsTID" , group = TID ),
+        #                      method = "gam",se=F ,formula = y~s(x , k = 4)   )+
+        # ggplot2::geom_smooth(data =  SimData$ObsV[ SimData$ObsV$Year %in% InY , ],
+        #                      ggplot2::aes(x = RRadDistR , y =LA , color = "Obs" ),
+        #                      method = "gam",se=F ,formula = y~s(x , k = 4)     )+
+        ggplot2::geom_line(data = VLine3, ggplot2::aes(x = RRadDistR , y = TYva , color = "ObsTID", group = TID )   )+
+        ggplot2::geom_line(data = VLine2, ggplot2::aes(x = RRadDistR , y = TYva , color = "Obs" )   )+
         ggplot2::geom_point(data =  na.omit(SimTrait ),
                              ggplot2::aes(x = RRadDistR , y = VCV  , color = "Sim"  ) )+
         ggplot2::geom_smooth(data = na.omit(SimTrait ) ,method = 'gam',se=F,
@@ -403,12 +413,14 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
         ggplot2::theme_bw()+
         ggplot2::labs( title = "Fiber lumen area")+
         ggplot2:: scale_color_manual( values = c( "gray80", 'gray40', "orange" ), breaks = c( "ObsTID", "Obs","Sim")  )+
-        ggplot2::geom_smooth(data =  ObsFt[ ObsFt$Year %in% InY , ],
-                             ggplot2::aes(x = RRadDistR , y = LA , color = "ObsTID" , group = TID ),
-                             method = "gam",se=F ,formula = y~s(x , k = 4)   )+
-        ggplot2::geom_smooth(data =  ObsFt[ ObsFt$Year %in% InY , ],
-                             ggplot2::aes(x = RRadDistR , y = LA , color = "Obs" ),
-                             method = "gam",se=F ,formula = y~s(x , k = 4)     )+
+        # ggplot2::geom_smooth(data =  ObsFt[ ObsFt$Year %in% InY , ],
+        #                      ggplot2::aes(x = RRadDistR , y = LA , color = "ObsTID" , group = TID ),
+        #                      method = "gam",se=F ,formula = y~s(x , k = 4)   )+
+        # ggplot2::geom_smooth(data =  ObsFt[ ObsFt$Year %in% InY , ],
+        #                      ggplot2::aes(x = RRadDistR , y = LA , color = "Obs" ),
+        #                      method = "gam",se=F ,formula = y~s(x , k = 4)     )+
+        ggplot2::geom_line(data = FLine3, ggplot2::aes(x = RRadDistR , y = TYfa , color = "ObsTID", group = TID )   )+
+        ggplot2::geom_line(data = FLine2, ggplot2::aes(x = RRadDistR , y = TYfa , color = "Obs" )   )+
         ggplot2::geom_point(data =  SimTrait ,
                             ggplot2::aes(x = RRadDistRV , y = CV  , color = "Sim"  ) )+
         ggplot2::geom_smooth(data = SimTrait ,method = 'gam',se=F,
@@ -420,12 +432,14 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
         ggplot2::theme_bw()+
         ggplot2::labs( title = "Fiber cell wall thickness")+
         ggplot2:: scale_color_manual( values = c( "gray80", 'gray40', "orange" ), breaks = c( "ObsTID", "Obs","Sim")  )+
-        ggplot2::geom_smooth(data =  ObsFt[ ObsFt$Year %in% InY , ],
-                             ggplot2::aes(x = RRadDistR , y = CWTall , color = "ObsTID" , group = TID ),
-                             method = "gam",se=F ,formula = y~s(x , k = 4)   )+
-        ggplot2::geom_smooth(data =  ObsFt[ ObsFt$Year %in% InY , ],
-                             ggplot2::aes(x = RRadDistR , y = CWTall , color = "Obs" ),
-                             method = "gam",se=F ,formula = y~s(x , k = 4)     )+
+        # ggplot2::geom_smooth(data =  ObsFt[ ObsFt$Year %in% InY , ],
+        #                      ggplot2::aes(x = RRadDistR , y = CWTall , color = "ObsTID" , group = TID ),
+        #                      method = "gam",se=F ,formula = y~s(x , k = 4)   )+
+        # ggplot2::geom_smooth(data =  ObsFt[ ObsFt$Year %in% InY , ],
+        #                      ggplot2::aes(x = RRadDistR , y = CWTall , color = "Obs" ),
+        #                      method = "gam",se=F ,formula = y~s(x , k = 4)     )+
+        ggplot2::geom_line(data = FLine3, ggplot2::aes(x = RRadDistR , y = TYfwt , color = "ObsTID", group = TID )   )+
+        ggplot2::geom_line(data = FLine2, ggplot2::aes(x = RRadDistR , y = TYfwt , color = "Obs" )   )+
         ggplot2::geom_point(data =  SimTrait ,
                             ggplot2::aes(x = RRadDistR , y = WT  , color = "Sim"  ) )+
         ggplot2::geom_smooth(data = SimTrait ,method = 'gam',se=F,
@@ -591,8 +605,7 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
     output$downloadParam <- downloadHandler(
       filename = "Parameters.xlsx",
       content = function(file) {
-        openxlsx::write.xlsx( list( parameter =  Adata$param ,
-                                    LiLimt = data.frame( Vessel = input$vgRLi , Fiber = input$fgRLi   )) , file )
+        openxlsx::write.xlsx( SimData$param , file )
       }
     )
 

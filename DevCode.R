@@ -22,7 +22,8 @@ usethis::use_r("Sim_BTR")
 # usethis::use_package("tibble")
 # usethis::use_package("tidyr")
 # usethis::use_mit_license()
-setwd( "D:/R_Github/BTRtools")
+# setwd( "D:/R_Github/BTRtools") ## home
+setwd( "D:/ZhaoBQ/BTRtools")
 devtools::document()
 
 devtools::check()
@@ -152,6 +153,7 @@ SimData <- list(
   clims = as.data.frame(clims),
   Tage = as.data.frame(Tage),
   ObsF = as.data.frame(ObsF),
-  ObsV = as.data.frame(ObsV)
+  ObsV = as.data.frame(ObsV),
+  CLines = CLines
 )
 ResData <- list()
