@@ -4,7 +4,7 @@
 \alias{sim_btr}
 \title{Sim BTR}
 \usage{
-sim_btr(param, clims = NA, Tage = NA, ObsF = NA, ObsV = NA)
+sim_btr(param, clims = NA, Tage = NA, ObsF = NA, ObsV = NA, Obsline = NA)
 }
 \arguments{
 \item{param}{parameters}
@@ -16,6 +16,8 @@ sim_btr(param, clims = NA, Tage = NA, ObsF = NA, ObsV = NA)
 \item{ObsF}{Observe Fiber}
 
 \item{ObsV}{Observe vessel}
+
+\item{Obsline}{取代ObsF V}
 
 \item{syear}{start year}
 

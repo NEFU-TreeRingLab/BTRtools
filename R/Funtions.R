@@ -568,6 +568,8 @@ RegLi <- function(simclim , LineF , LineV , param ){
 #'
 #' @return Cell traits line
 #'
+#' @export
+#'
 #' @importFrom dplyr left_join group_by arrange mutate case_when filter count summarise select
 #' @importFrom tidyr spread gather separate
 #' @importFrom tibble remove_rownames column_to_rownames

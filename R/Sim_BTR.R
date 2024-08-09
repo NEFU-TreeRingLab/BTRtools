@@ -12,6 +12,7 @@
 #' @param eyear end year
 #' @param ObsF Observe Fiber
 #' @param ObsV Observe vessel
+#' @param Obsline 取代ObsF V
 #'
 #' @importFrom dplyr left_join
 #' @importFrom tidyr gather
@@ -24,7 +25,7 @@
 #' @import shiny
 #'
 # library(shiny)
-sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
+sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline = NA ){
 
   # StartY <- max( min(Tage$Year), min(clims$Year)  )
   # EndY <- min( max(Tage$Year), max(clims$Year) )
@@ -34,15 +35,17 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
   #
   # obsF <- obsF[obsF$Year %in% c(StartY:EndY ),]
   # obsV <- obsF[obsF$Year %in% c(StartY:EndY ),]
-
-  CLines <- CellLine(ObsV = ObsV,ObsF = ObsF )
+  ifelse( all(is.na(Obsline)) ,
+      CLines <- CellLine(ObsV = ObsV,ObsF = ObsF ),
+      CLines <- Obsline
+  )
 
   ui <- fluidPage( ## ui ####
      titlePanel( "Simulate BTR model"),
      column( ## col 1 ####
        width = 1,
 
-       numericInput("syear", "Start year",2000,min = 1800 , max = Inf , step = 1), ##
+       numericInput("syear", "Start year",2010,min = 1800 , max = Inf , step = 1), ##
        numericInput("eyear", "End year",2020,min = 1800 , max = Inf , step = 1), ##
        h4( 'Cambial parameters:' ),
        numericInput("va_cz", "V_cz",param$values[param$parameter == "va_cz"],
@@ -89,7 +92,10 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
        # Button
        # actionButton("Sim", "Run BTR model"),
        tags$hr(),
-       downloadButton("downloadParam", "Download Param")
+       downloadButton("downloadParam", "Download Param"),
+
+       tags$hr(),
+       downloadButton("downloadResult", "Download Result")
 
 
      ), # end c1 -----
@@ -328,8 +334,7 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
 
     observeEvent(input$Sim, { ## 点击Run BTR ####
 
-      updateNumericInput(session, "MaxLi.fiber", value = NA)
-      updateNumericInput(session, "MaxLi.Vessel", value = NA)
+
 
       StartY <- max( min(SimData$Tage$Year), min(SimData$clims$Year) ,input$syear )
       EndY <- min( max(SimData$Tage$Year), max(SimData$clims$Year)  ,input$eyear )
@@ -472,6 +477,9 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
 
       # if ( all(  input$MaxLiDoyF == 100 , input$MinLiDoyF == 320 ,
       #            input$MaxLiDoyV == 100 , input$MinLiDoyV == 320  )  ) {
+
+        updateNumericInput(session, "MaxLi.fiber", value = NA)
+        updateNumericInput(session, "MaxLi.Vessel", value = NA)
         updateNumericInput(session, "MaxLiDoyF", value = EWDOYF)
         updateNumericInput(session, "MinLiDoyF", value = LWDOYF)
         updateNumericInput(session, "MaxLiDoyV", value = EWDOYV)
@@ -609,6 +617,14 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA ){
       }
     )
 
+
+    # Downloadable csv of selected dataset ----
+    output$downloadResult <- downloadHandler(
+      filename = "Outputs.xlsx",
+      content = function(file) {
+        openxlsx::write.xlsx( ResData$result , file )
+      }
+    )
 
   }
 
