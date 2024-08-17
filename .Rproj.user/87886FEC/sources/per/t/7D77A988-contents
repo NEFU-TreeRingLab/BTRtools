@@ -82,6 +82,7 @@ Trend_age <-function(dt,... ){
                 plotOutput("RegFig"),
                 tableOutput("Params"),
                 tableOutput("ModAs"),
+                plotOutput('Trendline'),
                 tableOutput('Trend')
               ) ## mainPanel end --
 
@@ -112,9 +113,9 @@ Trend_age <-function(dt,... ){
         input$Trw == "GAM" ~ "pGamRw",
         input$Trw == "Manual" ~ "mExpRw")
       ccla <- dplyr::case_when(
-        input$Trw == "EXP" ~ "pExpLa",
-        input$Trw == "GAM" ~ "pGamLa",
-        input$Trw == "Manual" ~ "mExpLa")
+        input$Tla == "EXP" ~ "pExpLa",
+        input$Tla == "GAM" ~ "pGamLa",
+        input$Tla == "Manual" ~ "mExpLa")
       Tab1Val$Trend <- dplyr::left_join(Tab1Val$dtNor |> dplyr::select(all_of(  c('Year','age',ccrw,ccla ))) |>
                                           dplyr::rename( setNames( c('Year','age',ccrw,ccla ), c('Year','age','Tage','Lage'  ))),
                                         Tab1Val$dtOri |> dplyr::select(all_of(  c('Year','age',"MRW",'MaxLA','CD','RCTA',ccrw,ccla ))) |>
@@ -148,6 +149,15 @@ Trend_age <-function(dt,... ){
           ggplot2::facet_wrap(factor(Name,levels = c('RW', 'MaxLA') )  ~ type, scales = "free")
 
       }) # RegFig end
+
+      output$Trendline <- renderPlot({
+
+
+        ggplot2::ggplot(Tab1Val$Trend )+
+          ggplot2::geom_line(  ggplot2::aes(x  = Year, y = Tage ,color = 'Tage'  ))+
+          ggplot2::geom_line(  ggplot2::aes(x  = Year, y = Lage ,color = 'Lage'  ))
+
+      })
 
       output$Params <- renderTable( Tab1Val$param, digits = 5 )
       output$ModAs <- renderTable( Tab1Val$ModAs , rownames = T  )

@@ -17,7 +17,7 @@
 #' @importFrom dplyr left_join
 #' @importFrom tidyr gather
 #' @importFrom ggplot2 ggplot theme_bw labs theme geom_point geom_line aes scale_color_manual scale_x_continuous
-#' @importFrom rBTRdev mod.test
+#' @importFrom rBTR mod.test
 #' @importFrom ggpubr ggarrange
 #' @importFrom openxlsx write.xlsx
 #' @importFrom mgcv gam
@@ -248,7 +248,7 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
 
       gRs$Years <- dplyr::left_join(gRs$Years, Tage)
 
-      cors <- rBTRdev::mod.test(gRs$Years$sFrw,gRs$Years$sgR)
+      cors <- rBTR::mod.test(gRs$Years$sFrw,gRs$Years$sgR)
 
       p4 <- ggpubr::ggarrange(
         ggplot2::ggplot(gRs$DOYs)+
@@ -346,7 +346,7 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
       ObsVt <- SimData$ObsV[SimData$ObsV$Year %in% c(StartY:EndY ),]
 
 
-      ResData$result <-  rBTRdev::btr_parallel( clim = climst ,parameters = SimData$param , age = Taget,
+      ResData$result <-  rBTR::btr_parallel( clim = climst ,parameters = SimData$param , age = Taget,
                                syear = StartY  ,eyear = EndY , Cores = input$Cores, writeRes = F)
 
       ResRings <- ResData$result$annaulRing |>
@@ -356,10 +356,10 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
         dplyr::rename( Obs_MRW = MRW, Obs_MaxLA = MaxLA , Obs_CD =  CD, Obs_RCTA = RCTA ) )
 
 
-      ResData$ModTestTable <- rbind( rBTRdev::mod.test( y_actual = ResRings$Obs_MRW ,y_predicted =  ResRings$Sim_MRW   ) ,
-                             rBTRdev::mod.test( y_actual = ResRings$Obs_CD ,y_predicted =  ResRings$Sim_CD   ) ,
-                             rBTRdev::mod.test( y_actual = ResRings$Obs_RCTA ,y_predicted =  ResRings$Sim_RCTA   ) ,
-                             rBTRdev::mod.test( y_actual = ResRings$Obs_MaxLA ,y_predicted =  ResRings$Sim_MaxLA   )
+      ResData$ModTestTable <- rbind( rBTR::mod.test( y_actual = ResRings$Obs_MRW ,y_predicted =  ResRings$Sim_MRW   ) ,
+                             rBTR::mod.test( y_actual = ResRings$Obs_CD ,y_predicted =  ResRings$Sim_CD   ) ,
+                             rBTR::mod.test( y_actual = ResRings$Obs_RCTA ,y_predicted =  ResRings$Sim_RCTA   ) ,
+                             rBTR::mod.test( y_actual = ResRings$Obs_MaxLA ,y_predicted =  ResRings$Sim_MaxLA   )
                              ) |> round(4)
       rownames(ResData$ModTestTable) <- c( "RingWidth", "CD", "VF", "MaxLA" )
 

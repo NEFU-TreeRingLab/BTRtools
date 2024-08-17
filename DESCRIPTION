@@ -17,6 +17,7 @@ Imports:
     mgcv,
     nls.multstart,
     openxlsx,
+    rBTR,
     rBTRdev,
     shiny,
     tibble,

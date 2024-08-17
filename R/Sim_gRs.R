@@ -13,7 +13,7 @@
 #' @importFrom dplyr left_join
 #' @importFrom tidyr gather
 #' @importFrom ggplot2 ggplot theme_bw labs theme geom_point geom_line aes scale_color_manual scale_x_continuous
-#' @importFrom rBTRdev mod.test
+#' @importFrom rBTR mod.test
 #' @importFrom ggpubr ggarrange
 #' @importFrom openxlsx write.xlsx
 #'
@@ -141,7 +141,7 @@ Sim_gRs <- function(param,Tage,clims  ){ ## sfRW
 
      gRs$Years <- dplyr::left_join(gRs$Years, Tage)
 
-     cors <- rBTRdev::mod.test(gRs$Years$sFrw,gRs$Years$sgR)
+     cors <- rBTR::mod.test(gRs$Years$sFrw,gRs$Years$sgR)
 
      p4 <- ggpubr::ggarrange(
      ggplot2::ggplot(gRs$DOYs)+

@@ -38,13 +38,13 @@ Sim_Cells <- function(ObsV =NULL ,ObsF=NULL , param,...) {
                               "Fiber rate:",
                               min = 0,
                               max = 5,
-                              step = 0.05,
+                              step = 0.025,
                               value = 1 ), ## end of sliderinput
                   sliderInput("vgRLi",
                               "Vessel rate:",
                               min = 0,
                               max = 5,
-                              step = 0.05,
+                              step = 0.025,
                               value = 1 ), ## end of sliderinput
                   sliderInput("dry",
                               "Drought rate:",

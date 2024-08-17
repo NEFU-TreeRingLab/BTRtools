@@ -96,7 +96,7 @@ nors <- function( x ){
 #'
 #' @importFrom dplyr mutate select
 #' @importFrom mgcv gam
-#' @importFrom rBTRdev mod.test
+#' @importFrom rBTR mod.test
 #'
 ## Regression Result
 RegData <- function( dt , Nage , Nrw, Nla,Ncd, Nrcta,
@@ -177,13 +177,13 @@ RegData <- function( dt , Nage , Nrw, Nla,Ncd, Nrcta,
                        beta = c( betaRw, betaLa ),
                        c = c( cRw, cLa))
 
-  ModAs <- rbind( rBTRdev::mod.test(dtOri$MRW, dtOri$pGamRw ) ,
-                  rBTRdev::mod.test(dtOri$MRW, dtOri$pExpRw ),
-                  rBTRdev::mod.test(dtOri$MRW, dtOri$mExpRw ) ,
+  ModAs <- rbind( rBTR::mod.test(dtOri$MRW, dtOri$pGamRw ) ,
+                  rBTR::mod.test(dtOri$MRW, dtOri$pExpRw ),
+                  rBTR::mod.test(dtOri$MRW, dtOri$mExpRw ) ,
 
-                  rBTRdev::mod.test(dtOri$MaxLA, dtOri$pGamLa ) ,
-                  rBTRdev::mod.test(dtOri$MaxLA, dtOri$pExpLa ),
-                  rBTRdev::mod.test(dtOri$MaxLA, dtOri$mExpLa )
+                  rBTR::mod.test(dtOri$MaxLA, dtOri$pGamLa ) ,
+                  rBTR::mod.test(dtOri$MaxLA, dtOri$pExpLa ),
+                  rBTR::mod.test(dtOri$MaxLA, dtOri$mExpLa )
   ) |> round(3)
   rownames(ModAs) <- c('RwGAM' , 'RwExp' ,'RwManual', 'LaGAM' , 'LaExp' , 'LaManual'  )
 
@@ -197,8 +197,10 @@ RegData <- function( dt , Nage , Nrw, Nla,Ncd, Nrcta,
 #'
 #' @importFrom dplyr mutate select filter rename
 #' @importFrom tidyr spread
-#' @importFrom rBTRdev daily_grwoth
+## #' @importFrom rBTR daily_grwoth
 #' @importFrom data.table rbindlist
+#'
+#' @import rBTR
 #'
 #' @param param parameters
 #' @param wgR wgR gR 0-1
@@ -273,7 +275,7 @@ CellGrwothData <- function( param,wgR, dry, fgRLi,vgRLi ){
 
   while( any(dailyCells$dailyFiber$DDOY == 0 , dailyCells$dailyVessels$DDOY == 0  )   ){
 
-  dailyCells <-rBTRdev::daily_grwoth( newCell = 0,newVessel = 0,vesselsNum = 0,dailyCells =  dailyCells ,
+  dailyCells <-rBTR:::daily_grwoth( newCell = 0,newVessel = 0,vesselsNum = 0,dailyCells =  dailyCells ,
                 cells = cells,vessels = vessels ,
                 clim.today = clim.today ,
                 fixparam.growth.fiber = fixparam.growth.fiber,
@@ -319,7 +321,7 @@ AupdatedB <- function( DataA , DataB, ons ){
 #'
 #' @return gRs
 #'
-#' @importFrom rBTRdev Compute_gR2
+#' @importFrom rBTR Compute_gR2
 #' @importFrom dplyr left_join group_by arrange mutate case_when filter count summarise select
 #' @importFrom tidyr spread gather
 #'
@@ -334,7 +336,7 @@ ComputeGrs <- function(clims ,param){
   param$values <- as.numeric(param$values)
   growth_Param  <- param[param$modul == "gR",] ## 生长速率阈值参数
 
-  microclim <- rBTRdev:::Compute_gR2(clims , growth_Param) |>
+  microclim <- rBTR:::Compute_gR2(clims , growth_Param) |>
     dplyr::group_by(Year) |>
     dplyr::arrange(Year,DOY) |>
     dplyr::mutate( aT  = TEM - param$values[param$parameter == "T1"]  ,
@@ -384,7 +386,7 @@ ComputeGrs <- function(clims ,param){
 #'
 #' @return Div
 #'
-#' @importFrom rBTRdev Compute_gR2
+#' @importFrom rBTR Compute_gR2
 #' @importFrom dplyr left_join group_by arrange mutate case_when filter count summarise select
 #' @importFrom tidyr spread gather
 #' @importFrom tibble remove_rownames column_to_rownames
@@ -426,7 +428,7 @@ C_Div <- function( param ){
 #'
 #' @return Div
 #'
-#' @importFrom rBTRdev Compute_gR2
+#' @importFrom rBTR Compute_gR2
 #' @importFrom dplyr left_join group_by arrange mutate case_when filter count summarise select
 #' @importFrom tidyr spread gather
 #' @importFrom tibble remove_rownames column_to_rownames
@@ -444,7 +446,7 @@ C_Div <- function( param ){
 #                VPD = mean(VPD ,na.rm = T),
 #                dL_i = mean(dL_i ,na.rm = T),
 #                Ls = mean(Ls ,na.rm = T)) |>
-#     rBTRdev:::Compute_gR2( gParam)
+#     rBTR:::Compute_gR2( gParam)
 #
 #
 # }
