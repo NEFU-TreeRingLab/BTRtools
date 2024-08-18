@@ -22,14 +22,13 @@ usethis::use_r("Sim_BTR")
 # usethis::use_package("tibble")
 # usethis::use_package("tidyr")
 # usethis::use_mit_license()
-# usethis::use_package("rBTR")
 # setwd( "D:/R_Github/BTRtools") ## home
 setwd( "D:/ZhaoBQ/BTRtools")
 devtools::document()
 
-devtools::check()
+# devtools::check()
 
-devtools::unload()
+# devtools::unload()
 
 devtools::load_all()
 
@@ -94,14 +93,10 @@ ELwCell <- rbind(  CellGrwothData(param,wgR = 1, dry = 1, fgRLi = 0,vgRLi = 0 )|
 
 ## Tab 4 sim gRs
 
-# Tage <- read.csv("C:\\Users\\Dr. Zhao\\Desktop\\TrendAge2.csv")
-# param <- openxlsx::read.xlsx("Test\\Tdt\\Parameters.xlsx")
-# clims <- openxlsx::read.xlsx("Test\\Tdt\\Clim_5.xlsx") |> dplyr::filter(site == "LS")
 
-Tage <- read.csv("C:\\Users\\Dr. Zhao\\Desktop\\TrendAge.csv")
-param <- openxlsx::read.xlsx("E:\\论文内容\\202408\\wood-anatomy-data-main\\Data\\NewSim\\ParametersBP.xlsx")
-clims = openxlsx::read.xlsx("E:\\论文内容\\模型论文修改\\投稿TreePhys\\Review_1_0614\\wood-anatomy-data-main\\Data\\Clim_5.xlsx") |>
-  dplyr::filter(site == "LS")
+Tage <- read.csv("C:\\Users\\Dr. Zhao\\Desktop\\TrendAge2.csv")
+param <- openxlsx::read.xlsx("Test\\Tdt\\Parameters.xlsx")
+clims <- openxlsx::read.xlsx("Test\\Tdt\\Clim_5.xlsx") |> dplyr::filter(site == "LS")
 
 # ttp <- rBTRdev::btr_parallel(
 #   clim = clims,
@@ -112,7 +107,7 @@ clims = openxlsx::read.xlsx("E:\\论文内容\\模型论文修改\\投稿TreePhy
 #   testLim = F,CZgR = c(1,0,0,1 ), Pbar = T , testMod = F,Dcase = "min", Named = NULL  )
 
 
-ObsA <- readxl:::read_excel("D:\\R_Github\\Test\\Tdt\\LS_FM_A2.xlsx")
+ObsA <- readxl:::read_excel("Test\\Tdt\\LS_FM_A2.xlsx")
 ObsA$CWTall[ObsA$CWTall <= 0 ] <- NA
 ObsFilter <- unique( ObsA[ ,c( 'TID','path','Year' ) ] )|>
    dplyr::group_by(Year,path) |>
@@ -136,7 +131,7 @@ ObsF <- ObsA |> dplyr::filter(path == 'F', Year %in% ObsFilter$Year[ObsFilter$pa
 #   Tage = data.frame(Tage)
 # )
 ##
-input <- param[ c(26:64),c(1,6)] |>
+input <- param[ c(26:65),c(1,6)] |>
   tibble::remove_rownames() |>
   tibble::column_to_rownames("parameter") |>
   t() |> as.data.frame()
@@ -145,12 +140,12 @@ input$syear <- 2000
 input$eyear <- 2020
 input$Cores <- 12
 
-input$MaxLiDoyF <- 120
-input$MaxLiDoyV <- 186
-input$MinLiDoyF <- 190
-input$MinLiDoyV <- 236
-input$MaxLi.fiber <- NA
-input$MaxLi.vessel <- 0.1
+input$EwLiDoyF <- 120
+input$EwLiDoyV <- 186
+input$LwLiDoyF <- 190
+input$LwLiDoyV <- 236
+input$MaxLi.fiber <- 0.5
+input$MaxLi.vessel <- 1
 
 
 SimData <- list(
@@ -159,6 +154,6 @@ SimData <- list(
   Tage = as.data.frame(Tage),
   ObsF = as.data.frame(ObsF),
   ObsV = as.data.frame(ObsV),
-  CLines = CLines
+  CLines = Obsline
 )
 ResData <- list()

@@ -53,3 +53,5 @@ rsconnect/
 
 # csv data
 *.csv
+/.Rproj.user
+/.Rproj.user
