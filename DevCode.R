@@ -22,8 +22,8 @@ usethis::use_r("Sim_BTR")
 # usethis::use_package("tibble")
 # usethis::use_package("tidyr")
 # usethis::use_mit_license()
-setwd( "D:/R_Github/BTRtools") ## home
-# setwd( "D:/ZhaoBQ/BTRtools")
+# setwd( "D:/R_Github/BTRtools") ## home
+setwd( "D:/ZhaoBQ/BTRtools")
 devtools::document()
 
 # devtools::check()

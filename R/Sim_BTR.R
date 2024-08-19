@@ -136,6 +136,7 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
                    value = param$values[param$parameter == 'VPD4'  ]), ## end of sliderinput
        tags$hr(),
        h4("Photoperiod 调整"),
+       checkboxInput( "ifRegLi","Sim Li?",value = T   ),
        numericInput("MaxLi.fiber", "Fiber dLi ",NA,
                     min = 0 , max = 5,step = 0.05  ), ##
        sliderInput("EwLiDoyF",
@@ -472,10 +473,20 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
         ggplot2::facet_grid(.~Year ,scale= "free")
       # Pfw
 
+      Pvn <- ggplot2::ggplot( )+
+        ggplot2::theme_bw()+
+        ggplot2::labs( title = "Fiber cell wall thickness")+
+        # ggplot2:: scale_color_manual( values = c( "gray80", 'gray40', "orange" ), breaks = c( "ObsTID", "Obs","Sim")  )+
+        ggplot2::geom_point(data =  SimTrait ,
+                            ggplot2::aes(x = RRadDistRV , y = rrVN  , color = "VN"  ) )+
+        ggplot2::geom_abline(slope = 1)+
+        ggplot2::facet_grid(.~Year ,scale= "free")
+
+
 
       output$TestAR <- renderPlot({
         ggpubr::ggarrange(
-           Pfa, Pfw,Pva, ncol = 1 , align = 'hv', common.legend = T, legend = "top" )
+           Pfa, Pfw,Pva,Pvn, ncol = 1 , align = 'hv', common.legend = T, legend = "top" )
       } )
 
       ##
@@ -589,10 +600,13 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
           param2 <- SimData$param
 
 
-          NewLip <- RegLi( simclim = ResData$tLiRes$SimClim, LineF = SimData$Line$LineF , LineV = SimData$Line$LineV , param = param2  )
-          SimData$NewLiP <- NewLip$NewP
-          param2 <- AupdatedB(DataA = NewLip$NewP,DataB = param2,ons = 'parameter' )
-          SimData$param <- param2
+            NewLip <- RegLi( simclim = ResData$tLiRes$SimClim, LineF = SimData$Line$LineF , LineV = SimData$Line$LineV , param = param2  )
+
+          if (input$ifRegLi == T) {
+            SimData$NewLiP <- NewLip$NewP
+            param2 <- AupdatedB(DataA = NewLip$NewP,DataB = param2,ons = 'parameter' )
+            SimData$param <- param2
+          }
 
         ggpubr::ggarrange(
         ggplot2::ggplot( ResData$tLiRes$SimTraitF )+
