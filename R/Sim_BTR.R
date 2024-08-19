@@ -413,6 +413,8 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
       SimTrait$VCV[SimTrait$VCV == 0 ] <- NA
       # ResData$SimTrait <- SimTrait
 
+
+
       Pva <- ggplot2::ggplot(    )+
         ggplot2::theme_bw()+
         ggplot2::labs( title = "Vessel lumen area")+
@@ -426,9 +428,9 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
         ggplot2::geom_line(data = VLine3, ggplot2::aes(x = RRadDistR , y = TYva , color = "ObsTID", group = TID )   )+
         ggplot2::geom_line(data = VLine2, ggplot2::aes(x = RRadDistR , y = TYva , color = "Obs" )   )+
         ggplot2::geom_point(data =  na.omit(SimTrait ),
-                             ggplot2::aes(x = RRadDistR , y = VCV  , color = "Sim"  ) )+
-        ggplot2::geom_smooth(data = na.omit(SimTrait ) ,method = 'gam',se=F,
-                            ggplot2::aes(x = RRadDistR , y = VCV  , color = "Sim"  ) )+
+                             ggplot2::aes(x = RRadDistRV , y = VCV  , color = "Sim"  ) )+
+        ggplot2::geom_smooth(data = na.omit(SimTrait ) ,method = 'gam',se=F, formula = y~s(x , k = 6 ),
+                            ggplot2::aes(x = RRadDistRV , y = VCV  , color = "Sim"  ) )+
         ggplot2::facet_grid(.~Year ,scale= "free")
       # Pva
 
@@ -445,9 +447,9 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
         ggplot2::geom_line(data = FLine3, ggplot2::aes(x = RRadDistR , y = TYfa , color = "ObsTID", group = TID )   )+
         ggplot2::geom_line(data = FLine2, ggplot2::aes(x = RRadDistR , y = TYfa , color = "Obs" )   )+
         ggplot2::geom_point(data =  SimTrait ,
-                            ggplot2::aes(x = RRadDistRV , y = CV  , color = "Sim"  ) )+
-        ggplot2::geom_smooth(data = SimTrait ,method = 'gam',se=F,
-                           ggplot2::aes(x = RRadDistRV , y = CV  , color = "Sim"  ) )+
+                            ggplot2::aes(x = RRadDistR , y = CV  , color = "Sim"  ) )+
+        ggplot2::geom_smooth(data = SimTrait ,method = 'gam',se=F,formula = y~s(x , k = 6 ),
+                           ggplot2::aes(x = RRadDistR , y = CV  , color = "Sim"  ) )+
         ggplot2::facet_grid(.~Year ,scale= "free")
       # Pfa
 
@@ -465,7 +467,7 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
         ggplot2::geom_line(data = FLine2, ggplot2::aes(x = RRadDistR , y = TYfwt , color = "Obs" )   )+
         ggplot2::geom_point(data =  SimTrait ,
                             ggplot2::aes(x = RRadDistR , y = WT  , color = "Sim"  ) )+
-        ggplot2::geom_smooth(data = SimTrait ,method = 'gam',se=F,
+        ggplot2::geom_smooth(data = SimTrait ,method = 'gam',se=F,formula = y~s(x , k = 6 ),
                            ggplot2::aes(x = RRadDistR , y = WT , color = "Sim"  ) )+
         ggplot2::facet_grid(.~Year ,scale= "free")
       # Pfw
@@ -489,6 +491,10 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
       LWDOYV <- which.min( abs( LineV$L_i.vessel - (max(LineV$L_i.vessel) - min(LineV$L_i.vessel))*0.99 ) )+59
       LineV$type <- cut(x = LineV$DOY,breaks =  c(0, EWDOYV,aPV,bPV,LWDOYV,366  ) ,labels = c( 'EA','a','TA','b','LA'  )  ) ##
 
+      updateNumericInput(session, "MaxLi.Vessel", value = max(LineV$L_i.vessel) )
+      updateNumericInput(session, "EwLiDoyV", value = EWDOYV)
+      updateNumericInput(session, "LwLiDoyV", value = LWDOYV)
+
       LineF <- tLiRes$SimClim[ c(60:273) , c('DOY',"L_i.fiber","dL_i"  )  ] |> dplyr::mutate(type = "TA")
       EWDOYF <- which.min( abs( LineF$L_i.fiber - (max(LineF$L_i.fiber) - min(LineF$L_i.fiber))*0.01 ) )+59
       aPF <- which.min( abs( LineF$L_i.fiber - (max(LineF$L_i.fiber) - min(LineF$L_i.fiber))*0.15 ) )+59
@@ -500,11 +506,11 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
       #            input$EwLiDoyV == 100 , input$LwLiDoyV == 320  )  ) {
 
         updateNumericInput(session, "MaxLi.fiber", value = max(LineF$L_i.fiber) )
-        updateNumericInput(session, "MaxLi.Vessel", value = max(LineV$L_i.vessel) )
         updateNumericInput(session, "EwLiDoyF", value = EWDOYF)
         updateNumericInput(session, "LwLiDoyF", value = LWDOYF)
-        updateNumericInput(session, "EwLiDoyV", value = EWDOYV)
-        updateNumericInput(session, "LwLiDoyV", value =LWDOYV)
+
+
+
       # }
 
       tLiRes$LineV <- LineV

@@ -45,6 +45,7 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
      column( ## col 1 ####
        width = 1,
 
+
        numericInput("syear", "Start year",2010,min = 1800 , max = Inf , step = 1), ##
        numericInput("eyear", "End year",2020,min = 1800 , max = Inf , step = 1), ##
        h4( 'Cambial parameters:' ),
@@ -137,33 +138,37 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
        h4("Photoperiod 调整"),
        numericInput("MaxLi.fiber", "Fiber dLi ",NA,
                     min = 0 , max = 5,step = 0.05  ), ##
-       sliderInput("MaxLiDoyF",
+       sliderInput("EwLiDoyF",
                    "The end DOY of early wood fiber:",
-                   min = 100,
-                   max = 260,
+                   min = 60,
+                   max = 240,
                    step = 1,
-                   value = 100 ), ## end of sliderinput
-       sliderInput("MinLiDoyF",
+                   value = 60 ), ## end of sliderinput
+       sliderInput("LwLiDoyF",
                    "The start DOY of late wood fiber:",
                    min = 120,
-                   max = 320,
+                   max = 270,
                    step = 1,
-                   value = 320 ), ## end of sliderinput
+                   value = 270 ), ## end of sliderinput
        tags$hr(),
        numericInput("MaxLi.vessel", "Vessel dLi",NA,
                     min = 0 , max = 5,step = 0.05 ), ##
-       sliderInput("MaxLiDoyV",
+       sliderInput("EwLiDoyV",
                    "The end DOY of early wood vessel:",
-                   min = 100,
-                   max = 260,
+                   min = 60,
+                   max = 240,
                    step = 1,
-                   value = 100 ), ## end of sliderinput
-       sliderInput("MinLiDoyV",
+                   value = 60 ), ## end of sliderinput
+       sliderInput("LwLiDoyV",
                    "The start DOY of late wood vessel:",
                    min = 120,
-                   max = 320,
+                   max = 270,
                    step = 1,
-                   value = 320 ), ## end of sliderinput
+                   value = 270 ), ## end of sliderinput
+       tags$hr(),
+       actionButton("SaveParam", "Save this parameters"),
+       actionButton("ReturenParam", "Returen old parameters"),
+
        tags$hr(),
        sliderInput("Cores",
                    "Use CPU cores:",
@@ -171,6 +176,8 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
                    max = 32,
                    step = 1,
                    value = 12 ),
+
+
        tags$hr(),
        actionButton("Sim", "Run BTR model"),
 
@@ -180,12 +187,17 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
 
      column(  #col output 1 ####
        width = 4,
-       plotOutput("RegFigGrs",height = "700px"),
-       plotOutput('RegFigDiv',height = "200px"),
-       plotOutput("RegFigLis",height = "500px"),
-       plotOutput("RegFigSimLi",height = "200px"),
 
 
+       fluidRow(
+        plotOutput("RegFigGrs",height = "700px"),
+        plotOutput('RegFigDiv',height = "200px"),
+        plotOutput("RegFigLis",height = "500px"),
+       ),
+       fluidRow(
+        plotOutput("RegFigSimLi",height = "200px"),
+        tableOutput("NOparamLi")
+       ),
      ), # col output1 end ####
      column(  #col output 2 ####
               width = 4,
@@ -201,6 +213,7 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
 
     SimData <- reactiveValues(
       param = as.data.frame(param),
+      Oldparam = as.data.frame(param),
       clims = as.data.frame(clims),
       Tage = as.data.frame(Tage),
       ObsF = as.data.frame(ObsF),
@@ -253,34 +266,37 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
       p4 <- ggpubr::ggarrange(
         ggplot2::ggplot(gRs$DOYs)+
           ggplot2::theme_bw()+
-          ggplot2::theme(legend.position = "top")+
-          ggplot2::labs(subtitle = "gR" )+
+          # ggplot2::theme(legend.position = "top")+
+          # ggplot2::labs(subtitle = "gR" )+
           ggplot2::scale_color_manual( name = "",values = c("royalblue","red","orange"))+
           ggplot2::geom_line( ggplot2::aes(x = DOY, y = val, color = gR ))
         ,
         ggplot2::ggplot(LgT)+
           ggplot2::theme_bw()+
-          ggplot2::labs(subtitle = "gT" )+
+          # ggplot2::labs(subtitle = "gT" )+
           # ggplot2::scale_color_manual(values = c("royalblue","red","orange"))+
           ggplot2::geom_line( ggplot2::aes(x = TEM, y = gT ))
-        ,
+        ,nrow = 1 ,widths = c(2,1)#, align = "v"
+      )
+
+      p5 <- ggpubr::ggarrange(
         ggplot2::ggplot(LgM)+
           ggplot2::theme_bw()+
-          ggplot2::labs(subtitle = "gM" )+
+          # ggplot2::labs(subtitle = "gM" )+
           # ggplot2::scale_color_manual(values = c("royalblue","red","orange"))+
           ggplot2::geom_line( ggplot2::aes(x = SoilM, y = gM ))
         ,
         ggplot2::ggplot(LgV)+
           ggplot2::theme_bw()+
-          ggplot2::labs(subtitle = "gVPD" )+
+          # ggplot2::labs(subtitle = "gVPD" )+
           # ggplot2::scale_color_manual(values = c("royalblue","red","orange"))+
           ggplot2::geom_line( ggplot2::aes(x = VPD, y = gV ))
         ,nrow = 1 #, align = "v"
       )
 
       ggpubr::ggarrange(
-        ggplot2::ggplot(gRs$Years) + ##
-          ggplot2::labs(subtitle = paste("r =",round(cors$COR,3)) )+
+        ggplot2::ggplot(gRs$Years)+ ##
+          ggplot2::labs(subtitle =  paste("r =",round(cors$COR,3)) )+ ##
           ggplot2::theme_bw()+
           ggplot2::scale_x_continuous(limits = c(StartY-1,EndY+1))+
           ggplot2::geom_line(  ggplot2::aes(x = Year , y = sFrw,color = "sRW" ),linewidth = 0.3)+
@@ -292,8 +308,8 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
           ggplot2::theme_bw()+
           ggplot2::scale_x_continuous(limits = c(StartY-1,EndY+1))+
           ggplot2::geom_col( ggplot2::aes(x = Year, y = val , fill = key ),position = 'fill' )
-        ,p4
-        ,ncol = 1, align = "hv"
+        ,p4, p5
+        ,ncol = 1, align = "hv",heights = c(1,1,1.4,1)
       )
 
 
@@ -347,7 +363,9 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
 
 
       ResData$result <-  rBTR::btr_parallel( clim = climst ,parameters = SimData$param , age = Taget,
-                               syear = StartY  ,eyear = EndY , Cores = input$Cores, writeRes = F)
+                               syear = StartY  ,eyear = EndY , Cores = input$Cores, writeRes = F,
+                               intraannual = F, gTmethod = "Jonhson" , division = "limit",
+                               testLim = F,CZgR = c(1,0,0,1 ), Pbar = T , testMod = F,Dcase = "min", Named = NULL )
 
       ResRings <- ResData$result$annaulRing |>
         dplyr::select(Year, RingWidth, MaxVesselLumenArea, VesselDensity, VesselFraction ) |>
@@ -395,6 +413,8 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
       SimTrait$VCV[SimTrait$VCV == 0 ] <- NA
       # ResData$SimTrait <- SimTrait
 
+
+
       Pva <- ggplot2::ggplot(    )+
         ggplot2::theme_bw()+
         ggplot2::labs( title = "Vessel lumen area")+
@@ -408,9 +428,9 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
         ggplot2::geom_line(data = VLine3, ggplot2::aes(x = RRadDistR , y = TYva , color = "ObsTID", group = TID )   )+
         ggplot2::geom_line(data = VLine2, ggplot2::aes(x = RRadDistR , y = TYva , color = "Obs" )   )+
         ggplot2::geom_point(data =  na.omit(SimTrait ),
-                             ggplot2::aes(x = RRadDistR , y = VCV  , color = "Sim"  ) )+
-        ggplot2::geom_smooth(data = na.omit(SimTrait ) ,method = 'gam',se=F,
-                            ggplot2::aes(x = RRadDistR , y = VCV  , color = "Sim"  ) )+
+                             ggplot2::aes(x = RRadDistRV , y = VCV  , color = "Sim"  ) )+
+        ggplot2::geom_smooth(data = na.omit(SimTrait ) ,method = 'gam',se=F, formula = y~s(x , k = 6 ),
+                            ggplot2::aes(x = RRadDistRV , y = VCV  , color = "Sim"  ) )+
         ggplot2::facet_grid(.~Year ,scale= "free")
       # Pva
 
@@ -427,9 +447,9 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
         ggplot2::geom_line(data = FLine3, ggplot2::aes(x = RRadDistR , y = TYfa , color = "ObsTID", group = TID )   )+
         ggplot2::geom_line(data = FLine2, ggplot2::aes(x = RRadDistR , y = TYfa , color = "Obs" )   )+
         ggplot2::geom_point(data =  SimTrait ,
-                            ggplot2::aes(x = RRadDistRV , y = CV  , color = "Sim"  ) )+
-        ggplot2::geom_smooth(data = SimTrait ,method = 'gam',se=F,
-                           ggplot2::aes(x = RRadDistRV , y = CV  , color = "Sim"  ) )+
+                            ggplot2::aes(x = RRadDistR , y = CV  , color = "Sim"  ) )+
+        ggplot2::geom_smooth(data = SimTrait ,method = 'gam',se=F,formula = y~s(x , k = 6 ),
+                           ggplot2::aes(x = RRadDistR , y = CV  , color = "Sim"  ) )+
         ggplot2::facet_grid(.~Year ,scale= "free")
       # Pfa
 
@@ -447,7 +467,7 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
         ggplot2::geom_line(data = FLine2, ggplot2::aes(x = RRadDistR , y = TYfwt , color = "Obs" )   )+
         ggplot2::geom_point(data =  SimTrait ,
                             ggplot2::aes(x = RRadDistR , y = WT  , color = "Sim"  ) )+
-        ggplot2::geom_smooth(data = SimTrait ,method = 'gam',se=F,
+        ggplot2::geom_smooth(data = SimTrait ,method = 'gam',se=F,formula = y~s(x , k = 6 ),
                            ggplot2::aes(x = RRadDistR , y = WT , color = "Sim"  ) )+
         ggplot2::facet_grid(.~Year ,scale= "free")
       # Pfw
@@ -463,27 +483,34 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
                         SimTrait = SimTrait ,
                         ObsV = ObsVt ,ObsF= ObsFt ,InY = InY )
 
-      LineV <- tLiRes$SimClim[ c(90:300) , c('DOY',"L_i.vessel"  )  ] |> dplyr::mutate(type = "TA")
-      EWDOYV <- which.min( abs( LineV$L_i.vessel - (max(LineV$L_i.vessel) - min(LineV$L_i.vessel))*0.1 ) )+89
-      LWDOYV <- which.min( abs( LineV$L_i.vessel - (max(LineV$L_i.vessel) - min(LineV$L_i.vessel))*0.9 ) )+89
-      LineV$type[LineV$DOY< EWDOYV ] <- "EA"
-      LineV$type[LineV$DOY>= LWDOYV ] <- "LA"
+      LineV <- tLiRes$SimClim[ c(60:273) , c('DOY',"L_i.vessel","dL_i"  )  ] |> dplyr::mutate(type = "TA")
 
-      LineF <- tLiRes$SimClim[ c(90:300) , c('DOY',"L_i.fiber"  )  ] |> dplyr::mutate(type = "TA")
-      EWDOYF <- which.min( abs( LineF$L_i.fiber - (max(LineF$L_i.fiber) - min(LineF$L_i.fiber))*0.1 ) )+89
-      LWDOYF <- which.min( abs( LineF$L_i.fiber - (max(LineF$L_i.fiber) - min(LineF$L_i.fiber))*0.9 ) )+89
-      LineF$type[LineF$DOY< EWDOYF ] <- "EA"
-      LineF$type[LineF$DOY>= LWDOYF ] <- "LA"
+      EWDOYV <- which.min( abs( LineV$L_i.vessel - (max(LineV$L_i.vessel) - min(LineV$L_i.vessel))*0.01 ) )+59
+      aPV <- which.min( abs( LineV$L_i.vessel - (max(LineV$L_i.vessel) - min(LineV$L_i.vessel))*0.15 ) )+59
+      bPV <- which.min( abs( LineV$L_i.vessel - (max(LineV$L_i.vessel) - min(LineV$L_i.vessel))*0.65 ) )+59
+      LWDOYV <- which.min( abs( LineV$L_i.vessel - (max(LineV$L_i.vessel) - min(LineV$L_i.vessel))*0.99 ) )+59
+      LineV$type <- cut(x = LineV$DOY,breaks =  c(0, EWDOYV,aPV,bPV,LWDOYV,366  ) ,labels = c( 'EA','a','TA','b','LA'  )  ) ##
 
-      # if ( all(  input$MaxLiDoyF == 100 , input$MinLiDoyF == 320 ,
-      #            input$MaxLiDoyV == 100 , input$MinLiDoyV == 320  )  ) {
+      updateNumericInput(session, "MaxLi.Vessel", value = max(LineV$L_i.vessel) )
+      updateNumericInput(session, "EwLiDoyV", value = EWDOYV)
+      updateNumericInput(session, "LwLiDoyV", value = LWDOYV)
 
-        updateNumericInput(session, "MaxLi.fiber", value = NA)
-        updateNumericInput(session, "MaxLi.Vessel", value = NA)
-        updateNumericInput(session, "MaxLiDoyF", value = EWDOYF)
-        updateNumericInput(session, "MinLiDoyF", value = LWDOYF)
-        updateNumericInput(session, "MaxLiDoyV", value = EWDOYV)
-        updateNumericInput(session, "MinLiDoyV", value =LWDOYV)
+      LineF <- tLiRes$SimClim[ c(60:273) , c('DOY',"L_i.fiber","dL_i"  )  ] |> dplyr::mutate(type = "TA")
+      EWDOYF <- which.min( abs( LineF$L_i.fiber - (max(LineF$L_i.fiber) - min(LineF$L_i.fiber))*0.01 ) )+59
+      aPF <- which.min( abs( LineF$L_i.fiber - (max(LineF$L_i.fiber) - min(LineF$L_i.fiber))*0.15 ) )+59
+      bPF <- which.min( abs( LineF$L_i.fiber - (max(LineF$L_i.fiber) - min(LineF$L_i.fiber))*0.65 ) )+59
+      LWDOYF <- which.min( abs( LineF$L_i.fiber - (max(LineF$L_i.fiber) - min(LineF$L_i.fiber))*0.99 ) )+59
+      LineF$type <- cut(x = LineF$DOY,breaks =  c(0, EWDOYF,aPF,bPF,LWDOYF,366  ) ,labels = c( 'EA','a','TA','b','LA'  )  ) ##
+
+      # if ( all(  input$EwLiDoyF == 100 , input$LwLiDoyF == 320 ,
+      #            input$EwLiDoyV == 100 , input$LwLiDoyV == 320  )  ) {
+
+        updateNumericInput(session, "MaxLi.fiber", value = max(LineF$L_i.fiber) )
+        updateNumericInput(session, "EwLiDoyF", value = EWDOYF)
+        updateNumericInput(session, "LwLiDoyF", value = LWDOYF)
+
+
+
       # }
 
       tLiRes$LineV <- LineV
@@ -497,40 +524,80 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
 
       if ( length(ResData) != 0  ) {
 
-        LineF <- ResData$tLiRes$LineF |> dplyr::mutate(DOYnew = DOY)
-        LineV <- ResData$tLiRes$LineV |> dplyr::mutate(DOYnew = DOY)
+        LineF <- ResData$tLiRes$LineF |> dplyr::mutate(NewL_i.fiber = NA, Newtypr= 'EW')
+        LineV <- ResData$tLiRes$LineV |> dplyr::mutate(NewL_i.vessel = NA, Newtypr= 'EW')
 
-        dFEA = input$MaxLiDoyF - max(LineF$DOY[ LineF$type == "EA" ])
-        dFLA = input$MinLiDoyF - min(LineF$DOY[ LineF$type == "LA" ])
-        dFDOY = nrow(LineF[ LineF$type == "TA", ])
-        RRdliF <- ifelse( is.na(input$MaxLi.fiber),1, input$MaxLi.fiber/ max(LineF$L_i.fiber)    )
-        LineF$NewL_i.fiber <- LineF$L_i.fiber * RRdliF
-        LineF$DOYnew[ LineF$type == "EA" ] <- LineF$DOYnew[ LineF$type == "EA" ] + dFEA
-        LineF$DOYnew[ LineF$type == "LA" ] <- LineF$DOYnew[ LineF$type == "LA" ] + dFLA
-        LineF$DOYnew[ LineF$type == "TA" ] <- input$MaxLiDoyF + ((input$MinLiDoyF -input$MaxLiDoyF )/dFDOY) * c(1:dFDOY)
 
-        dVEA = input$MaxLiDoyV - max(LineV$DOY[ LineV$type == "EA" ])
-        dVLA = input$MinLiDoyV - min(LineV$DOY[ LineV$type == "LA" ])
-        dVDOY = nrow(LineV[ LineV$type == "TA", ])
-        RRdliV <- ifelse( is.na(input$MaxLi.vessel),1, input$MaxLi.vessel/ max(LineV$L_i.vessel)  )
-        LineV$NewL_i.vessel <- LineV$L_i.vessel * RRdliV
-        LineV$DOYnew[ LineV$type == "EA" ] <- LineV$DOYnew[ LineV$type == "EA" ] + dVEA
-        LineV$DOYnew[ LineV$type == "LA" ] <- LineV$DOYnew[ LineV$type == "LA" ] + dVLA
-        LineV$DOYnew[ LineV$type == "TA" ] <- input$MaxLiDoyV + ((input$MinLiDoyV -input$MaxLiDoyV )/dVDOY) * c(1:dVDOY)
+        ## old type
+        # dFEA = input$EwLiDoyF - max(LineF$DOY[ LineF$type == "EA" ])
+        # dFLA = input$LwLiDoyF - min(LineF$DOY[ LineF$type == "LA" ])
+        # dFDOY = nrow(LineF[ LineF$type == "TA", ])
+        # RRdliF <- ifelse( is.na(input$MaxLi.fiber),1, input$MaxLi.fiber/ max(LineF$L_i.fiber)    )
+        # LineF$NewL_i.fiber <- LineF$L_i.fiber * RRdliF
+        # LineF$DOYnew[ LineF$type == "EA" ] <- LineF$DOYnew[ LineF$type == "EA" ] + dFEA
+        # LineF$DOYnew[ LineF$type == "LA" ] <- LineF$DOYnew[ LineF$type == "LA" ] + dFLA
+        # LineF$DOYnew[ LineF$type == "TA" ] <- input$EwLiDoyF + ((input$LwLiDoyF -input$EwLiDoyF )/dFDOY) * c(1:dFDOY)
+
+        # dVEA = input$EwLiDoyV - max(LineV$DOY[ LineV$type == "EA" ])
+        # dVLA = input$LwLiDoyV - min(LineV$DOY[ LineV$type == "LA" ])
+        # dVDOY = nrow(LineV[ LineV$type == "TA", ])
+        # RRdliV <- ifelse( is.na(input$MaxLi.vessel),1, input$MaxLi.vessel/ max(LineV$L_i.vessel)  )
+        # LineV$NewL_i.vessel <- LineV$L_i.vessel * RRdliV
+        # LineV$DOYnew[ LineV$type == "EA" ] <- LineV$DOYnew[ LineV$type == "EA" ] + dVEA
+        # LineV$DOYnew[ LineV$type == "LA" ] <- LineV$DOYnew[ LineV$type == "LA" ] + dVLA
+        # LineV$DOYnew[ LineV$type == "TA" ] <- input$EwLiDoyV + ((input$LwLiDoyV -input$EwLiDoyV )/dVDOY) * c(1:dVDOY)
+
+        ### new type
+        ## 新区间
+        R_ELF <- (input$LwLiDoyF - input$EwLiDoyF - 1)/ length( LineF$type[ LineF$type %in%c("a","TA", "b"   ) ]   )
+        ## a的新时常
+        daF <- round(length(LineF$type[ LineF$type == "a"]  ) * R_ELF )
+        dTAF <- round(length(LineF$type[ LineF$type == "TA"]  ) * R_ELF )
+        LineF$Newtypr <- cut( LineF$DOY, breaks = c(0,input$EwLiDoyF, input$EwLiDoyF+daF, input$EwLiDoyF+daF +dTAF ,input$LwLiDoyF,366 ),
+                              labels = c('EA' ,'a','TA' , 'b', 'LA'  ) )
+
+        # LineF$NewL_i.fiber <- NA
+        LineF$NewL_i.fiber[ LineF$Newtypr == "EA"  ]  <- 0
+        LineF$NewL_i.fiber[ LineF$Newtypr == "LA"   ]  <- input$MaxLi.fiber
+        LineF$NewL_i.fiber[ LineF$Newtypr == "TA"   ]  <- input$MaxLi.fiber*0.5/dTAF *
+                                                          c(1:dTAF ) +input$MaxLi.fiber*0.15
+        # ggplot(LineF)+
+        # geom_line( aes(x =DOY , y =  NewL_i.fiber, linetype= "New" ), linewidth = 1)+
+        # geom_line( aes(x =DOY , y =  L_i.fiber, color = type ), linetype = 2 ,linewidth = 1 )
+
+
+        R_ELV <- (input$LwLiDoyV - input$EwLiDoyV - 1)/ length( LineV$type[ LineV$type %in%c("a","TA", "b"   ) ]   )
+        daV <- round(length(LineV$type[ LineV$type == "a"]  ) * R_ELV )
+        dTAV <- round(length(LineV$type[ LineV$type == "TA"]  ) * R_ELV )
+        LineV$Newtypr <- cut( LineV$DOY, breaks = c(0,input$EwLiDoyV, input$EwLiDoyV+daV, input$EwLiDoyV+daV +dTAV ,input$LwLiDoyV,366 ),
+                              labels = c('EA' ,'a','TA' , 'b', 'LA'  ) )
+
+        LineV$NewL_i.vessel[ LineV$Newtypr == "EA"  ]   <- 0
+        LineV$NewL_i.vessel[ LineV$Newtypr == "LA"   ]  <- input$MaxLi.vessel
+        LineV$NewL_i.vessel[ LineV$Newtypr == "TA"   ]  <- input$MaxLi.vessel*0.5/dTAV *
+                                                              c(1:dTAV  )+input$MaxLi.vessel*0.15
+
+        # ggplot(LineV)+
+        #   geom_line( aes(x =DOY , y =  NewL_i.vessel, linetype= "New" ), linewidth = 1)+
+        #   geom_line( aes(x =DOY , y =  L_i.vessel, color = type ), linetype = 2 ,linewidth = 1 )
+
+
 
         SimData$Line <- list(LineF=LineF, LineV =LineV)
 
           ## 更新数据
           param2 <- SimData$param
 
-          NewLip <- RegLi( simclim = ResData$tLiRes$SimClim, LineF = SimData$Line$LineF , LineV = SimData$Line$LineV , param = param2  )
 
+          NewLip <- RegLi( simclim = ResData$tLiRes$SimClim, LineF = SimData$Line$LineF , LineV = SimData$Line$LineV , param = param2  )
+          SimData$NewLiP <- NewLip$NewP
           param2 <- AupdatedB(DataA = NewLip$NewP,DataB = param2,ons = 'parameter' )
           SimData$param <- param2
 
         ggpubr::ggarrange(
         ggplot2::ggplot( ResData$tLiRes$SimTraitF )+
-          ggplot2::scale_x_continuous(limits = c(90,300))+
+          ggplot2::scale_x_continuous(limits = c(60,300),breaks = c( 61,91,122,153,184,215,246,277      ),
+                                      labels = c( 'Mar 61', 'Apr 91','May 122','Jun 153',"Jul 184","Aug 215",'Sep 246', 'Oct 277' )  )+
           ggplot2::geom_smooth( ggplot2::aes( x = DOY , y = LA,group = Year),
                                 data = ResData$tLiRes$ObsF,alpha = 0.5,
                                 method = 'gam',se=F,color = "#55B532"  )+
@@ -539,15 +606,17 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
         ,
         ggplot2::ggplot( NewLip$LineF )+
           # ggplot2::labs(subtitle = paste( "a=", NewLip$NewP[1,2],"b=",NewLip$NewP[2,2],'c=',NewLip$NewP[3,2]   ))+
-          ggplot2::scale_x_continuous(limits = c(90,300))+
-          ggplot2::geom_point( ggplot2::aes( x = DOY, y = -L_i.fiber  ),
+          ggplot2::scale_x_continuous(limits = c(60,300),breaks = c( 61,91,122,153,184,215,246,277      ),
+                                      labels = c( 'Mar 61', 'Apr 91','May 122','Jun 153',"Jul 184","Aug 215",'Sep 246', 'Oct 277' ))+
+          ggplot2::geom_point( ggplot2::aes( x = DOY, y = - NewL_i.fiber  ),
                               color = "red" )+
           ggplot2::geom_line( ggplot2::aes( x = DOY, y = - NewLi    ),
                                color = "pink", linewidth = 1.5 )+
-          ggplot2::geom_line( ggplot2::aes( x = DOYold , y = -OldL_i.fiber    ), color = "#0047AB" )
+          ggplot2::geom_line( ggplot2::aes( x = DOY , y = -L_i.fiber    ), color = "#0047AB" )
         ,
         ggplot2::ggplot( ResData$tLiRes$SimTraitV )+
-          ggplot2::scale_x_continuous(limits = c(90,300))+
+          ggplot2::scale_x_continuous(limits = c(60,300),breaks = c( 61,91,122,153,184,215,246,277      ),
+                                      labels = c( 'Mar 61', 'Apr 91','May 122','Jun 153',"Jul 184","Aug 215",'Sep 246', 'Oct 277' ))+
           ggplot2::geom_smooth( ggplot2::aes( x = DOY , y = LA,group = Year),
                                 data = ResData$tLiRes$ObsV,alpha = 0.5,
                                 method = 'gam',se=F,color = "#55B532"  )+
@@ -555,13 +624,14 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
           ggplot2::geom_smooth( ggplot2::aes( x = DOY , y = VCV),method = 'gam',se=F,color = "orange" ,linewidth = 2 )
         ,
         ggplot2::ggplot( NewLip$LineV )+
-          ggplot2::scale_x_continuous(limits = c(90,300))+
+          ggplot2::scale_x_continuous(limits = c(60,300),breaks = c( 61,91,122,153,184,215,246,277      ),
+                                      labels = c( 'Mar 61', 'Apr 91','May 122','Jun 153',"Jul 184","Aug 215",'Sep 246', 'Oct 277' ))+
           # ggplot2::labs(subtitle = paste( "a=", NewLip$NewP[4,2],"b=",NewLip$NewP[5,2],'c=',NewLip$NewP[6,2]   ))+
-          ggplot2::geom_point( ggplot2::aes( x = DOY, y = -L_i.vessel    ),
+          ggplot2::geom_point( ggplot2::aes( x = DOY, y = -NewL_i.vessel    ),
                                color = "red" )+
           ggplot2::geom_line( ggplot2::aes( x = DOY, y = -NewLi    ),
                               color = "pink", linewidth = 1.5 )+
-          ggplot2::geom_line( ggplot2::aes( x = DOYold , y = -OldL_i.vessel    ), color = "#0047AB" )
+          ggplot2::geom_line( ggplot2::aes( x = DOY , y = -L_i.vessel    ), color = "#0047AB" )
         ,ncol =1 ,align = 'hv'
         )
 
@@ -574,42 +644,25 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
 
     })
 
-    # observeEvent(input$SimLi, { ## 点击SimLi ####
-    # output$RegFigSimLi  <- renderPlot({
-    #   ## 更新数据 ####
-    #
-    #   param2 <- SimData$param
-    #
-    #   NewLip <- RegLi( simclim = ResData$tLiRes$SimClim, LineF = SimData$Line$LineF , LineV = SimData$Line$LineV , param = param2  )
-    #
-    #   param2 <- AupdatedB(DataA = NewLip$NewP,DataB = param2,ons = 'parameter' )
-    #   SimData$param <- param2
-    #
-    #   # output$RegFigSimLi  <- renderPlot({
-    #   ggpubr::ggarrange(
-    #     ggplot2::ggplot( NewLip$LineV )+
-    #       # ggplot2::labs(subtitle = paste( "a=", NewLip$NewP[1,2],"b=",NewLip$NewP[2,2],'c=',NewLip$NewP[3,2]   ))+
-    #       ggplot2::scale_x_continuous(limits = c(90,300))+
-    #       ggplot2::geom_point( ggplot2::aes( x = DOYnew, y = -L_i.fiber    ),
-    #                            color = "red" )+
-    #       ggplot2::geom_line( ggplot2::aes( x = DOY, y = -NewLi    ),
-    #                            color = "pink", linewidth = 1.5 )
-    #     ,
-    #     ggplot2::ggplot( NewLip$LineV )+
-    #       ggplot2::scale_x_continuous(limits = c(90,300))+
-    #       # ggplot2::labs(subtitle = paste( "a=", NewLip$NewP[4,2],"b=",NewLip$NewP[5,2],'c=',NewLip$NewP[6,2]   ))+
-    #       ggplot2::geom_point( ggplot2::aes( x = DOY, y = -L_i.vessel    ),
-    #                            color = "red" )+
-    #       ggplot2::geom_line( ggplot2::aes( x = DOY, y = -NewLi    ),
-    #                           color = "pink", linewidth = 1.5 )
-    #
-    #     ,ncol=2,align = 'hv'
-    #   )
-    #   # })
-    #
-    # })
+    output$NOparamLi <- renderTable({
+        dplyr::left_join( SimData$param[ SimData$param$parameter %in% c(  'a.fiber','b.fiber','c.fiber','a.vessel', 'b.vessel', 'c.vessel' ),
+                                            c('parameter', 'values'  )] ,
+                          SimData$Oldparam[ SimData$Oldparam$parameter %in% c(  'a.fiber','b.fiber','c.fiber','a.vessel', 'b.vessel', 'c.vessel' ),
+                                            c('parameter', 'values'  )] |> dplyr::rename(OldValue = values )      ) |>
+        t() |> as.data.frame()   },rownames = T )
 
-    # Downloadable csv of selected dataset ----
+    observeEvent( input$SaveParam, {
+      SimData$Oldparam <- SimData$param
+    } )
+
+
+    observeEvent( input$ReturenParam, {
+      SimData$param <- SimData$Oldparam
+    } )
+
+
+
+    # Downloadable Param ----
     output$downloadParam <- downloadHandler(
       filename = "Parameters.xlsx",
       content = function(file) {
@@ -618,7 +671,7 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
     )
 
 
-    # Downloadable csv of selected dataset ----
+    # Downloadable Result ----
     output$downloadResult <- downloadHandler(
       filename = "Outputs.xlsx",
       content = function(file) {

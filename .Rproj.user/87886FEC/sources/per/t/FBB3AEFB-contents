@@ -513,15 +513,15 @@ RegLi <- function(simclim , LineF , LineV , param ){
     tibble::column_to_rownames("parameter") |>
     t() |> as.data.frame( )
 
-  ModL_i <- mgcv::gam(dL_i ~ s( DOY ),data =  simclim)
+  # # ModL_i <- mgcv::gam(dL_i ~ s( DOY ),data =  simclim)
+  #
+  # LineF <-  dplyr::rename(LineF, DOYold = DOY, DOY = DOYnew,
+  #                         OldL_i.fiber = L_i.fiber , L_i.fiber = NewL_i.fiber)
+  # LineV <-  dplyr::rename(LineV, DOYold = DOY, DOY = DOYnew,
+  #                         OldL_i.vessel = L_i.vessel , L_i.vessel = NewL_i.vessel)
 
-  LineF <-  dplyr::rename(LineF, DOYold = DOY, DOY = DOYnew,
-                          OldL_i.fiber = L_i.fiber , L_i.fiber = NewL_i.fiber)
-  LineV <-  dplyr::rename(LineV, DOYold = DOY, DOY = DOYnew,
-                          OldL_i.vessel = L_i.vessel , L_i.vessel = NewL_i.vessel)
-
-  LineF$dL_i <- predict(ModL_i , LineF )
-  LineV$dL_i <- predict(ModL_i , LineV )
+  # LineF$dL_i <- predict(ModL_i , LineF )
+  # LineV$dL_i <- predict(ModL_i , LineV )
 
   # Pfiber <- nls.multstart::nls_multstart( L_i.fiber ~ a *exp( -exp(b - c * dL_i ))  ,
   #                                         data = LineF,
@@ -532,7 +532,7 @@ RegLi <- function(simclim , LineF , LineV , param ){
   #                                         supp_errors = 'Y' )
 
   Pfiber <- tryCatch({
-    nls( L_i.fiber ~ a *exp( -exp(b - c * dL_i ))  ,
+    nls( NewL_i.fiber ~ a *exp( -exp(b - c * dL_i ))  ,
                  data = LineF,
                  start =  list( a= params$a.fiber , b= params$b.fiber , c = params$c.fiber ) ) |>
       summary() |> coef()
@@ -543,7 +543,7 @@ RegLi <- function(simclim , LineF , LineV , param ){
   } )
 
   Pvessel <- tryCatch(
-    {nls( L_i.vessel ~ a *exp( -exp(b - c * dL_i ))  ,
+    {nls( NewL_i.vessel ~ a *exp( -exp(b - c * dL_i ))  ,
                  data = LineV,
                  start =  list( a= params$a.vessel , b= params$b.vessel , c = params$c.vessel ) ) |>
         summary() |> coef()
@@ -561,6 +561,16 @@ RegLi <- function(simclim , LineF , LineV , param ){
 
   LineF$NewLi <- NewP[1,2] *exp( -exp(NewP[2,2] - NewP[3,2] * LineF$dL_i ) )
   LineV$NewLi <- NewP[4,2] *exp( -exp(NewP[5,2] - NewP[6,2] * LineF$dL_i ) )
+
+  # ggplot(LineF  )+
+  #   geom_line(aes( x =DOY, y = L_i.fiber, color = "Old" ))+
+  #   geom_line(aes( x =DOY, y = NewL_i.fiber, color = "Manu" ))+
+  #   geom_line(aes( x =DOY, y = NewLi, color = "New" ))
+  #
+  # ggplot(LineV  )+
+  #   geom_line(aes( x =DOY, y = L_i.vessel, color = "Old" ))+
+  #   geom_line(aes( x =DOY, y = NewL_i.vessel, color = "Manu" ))+
+  #   geom_line(aes( x =DOY, y = NewLi, color = "New" ))
 
 
   return( list(NewP = NewP ,LineF =LineF, LineV = LineV ) )
