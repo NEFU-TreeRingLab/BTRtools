@@ -8,9 +8,7 @@
 
 BTRtools is a simple interactive interface on R developed based on Shiny to facilitate model parameterization.
 
-note：使用之前请安装 Rpackage: rBTR
-
-Please install the R package "rBTR" before using it.
+note：Please install the R package "rBTR" before using it.
 
 
 ## Installation
