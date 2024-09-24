@@ -27,7 +27,7 @@ Trend_age <-function(dt,... ){
                            ## 指定行列名
                            textInput("xaxis", "colum of X-axis", "age"),
                            textInput("MRW", "colum of Ring Width", "MRW"),
-                           textInput("MaxLA", "colum of Max Lumen area", "MAXLA"),
+                           textInput("MaxLA", "colum of Max Lumen area", "MaxLA"),
                            textInput("CD", "colum of Vessel density", "CD"),
                            textInput("RCTA", "colum of RCTA", "RCTA"),
 

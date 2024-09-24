@@ -18,7 +18,6 @@ Imports:
     nls.multstart,
     openxlsx,
     rBTR,
-    rBTRdev,
     shiny,
     tibble,
     tidyr

@@ -593,49 +593,96 @@ RegLi <- function(simclim , LineF , LineV , param ){
 #'
 
 CellLine <- function(ObsV,ObsF){
-
   cellline <- data.frame(RRadDistR=seq(0,100,1) )
 
-  ObsFs <- ObsF |> dplyr::mutate(G2 = as.factor(paste(Year,TID,sep = "_") ) )
-  ObsFs$Year  <- factor(ObsF$Year )
+  if ( any(!is.na( ObsF ))    ) {
+    ### Fobers
+    ObsFs <- ObsF |> dplyr::mutate(G2 = as.factor(paste(Year,TID,sep = "_") ) )
+    ObsFs$Year  <- factor(ObsF$Year )
+
+    Mtfa <- mgcv::gam( LA ~ s(RRadDistR , k =4  )  ,  data = ObsF  )
+    Mtfwt <- mgcv::gam( CWTall ~ s(RRadDistR , k =4  )  ,  data = ObsF  )
+
+    cellline$MtFa <- predict(Mtfa,cellline   )
+    cellline$Mtfwt <- predict(Mtfwt,cellline   )
+
+    Mtfa2 <- mgcv::gam( LA ~ s(RRadDistR , k =4 ,by = Year  )  ,  data = ObsFs  )
+    Mtfwt2 <- mgcv::gam( CWTall ~ s(RRadDistR , k =4  ,by = Year)  ,  data = ObsFs  )
+
+    Fys <- unique(ObsF$Year)
+
+    FiberLine2 <-  data.frame(RRadDistR= rep(seq(0,100,1),length(Fys)) , Year= rep(Fys, each= 101   )   )
+    FiberLine2$TYfa <- predict( Mtfa2, FiberLine2 )
+    FiberLine2$TYfwt <- predict( Mtfwt2, FiberLine2 )
+
+    TIDF <- unique(ObsFs$G2)
+    Mtfa3 <- mgcv::gam( LA ~ s(RRadDistR , k =3 ,by = G2 )  ,  data = ObsFs  )
+    Mtfwt3 <- mgcv::gam( CWTall ~ s(RRadDistR , k =3 ,by =G2 )  ,  data = ObsFs  )
+    FiberLine3 <-  data.frame(RRadDistR= rep(seq(0,100,1),length(TIDF)) , G2= rep(TIDF, each= 101   )   )
+    FiberLine3$TYfa <- predict( Mtfa3, FiberLine3 )
+    FiberLine3$TYfwt <- predict( Mtfwt3, FiberLine3 )
+    FiberLine3 <-tidyr::separate(FiberLine3, G2, c( "Year","TID"), sep = "_")
+
+  }
+
+
+
+  ### vessels
 
   ObsVs <- ObsV|> dplyr::mutate(G2 = as.factor(paste(Year,TID,sep = "_") ))
   ObsVs$Year  <- factor(ObsV$Year )
 
-  ## total cell
-  Mtfa <- mgcv::gam( LA ~ s(RRadDistR , k =4  )  ,  data = ObsF  )
-  Mtfwt <- mgcv::gam( CWTall ~ s(RRadDistR , k =4  )  ,  data = ObsF  )
   Mtva <- mgcv::gam( LA ~ s(RRadDistR , k =4  )  ,  data = ObsV  )
-  cellline$MtFa <- predict(Mtfa,cellline   )
-  cellline$Mtfwt <- predict(Mtfwt,cellline   )
+
   cellline$Mtva <- predict(Mtva,cellline   )
-  Mtfa2 <- mgcv::gam( LA ~ s(RRadDistR , k =4 ,by = Year  )  ,  data = ObsFs  )
-  Mtfwt2 <- mgcv::gam( CWTall ~ s(RRadDistR , k =4  ,by = Year)  ,  data = ObsFs  )
+
   Mtva2 <- mgcv::gam( LA ~ s(RRadDistR , k =4  ,by = Year)  ,  data = ObsVs  )
-  ## total & year
-  Fys <- unique(ObsF$Year)
+
   Vys <- unique(ObsV$Year)
-  FiberLine2 <-  data.frame(RRadDistR= rep(seq(0,100,1),length(Fys)) , Year= rep(Fys, each= 101   )   )
-  FiberLine2$TYfa <- predict( Mtfa2, FiberLine2 )
-  FiberLine2$TYfwt <- predict( Mtfwt2, FiberLine2 )
 
   VesselLine2 <-  data.frame(RRadDistR= rep(seq(0,100,1),length(Vys)) , Year= rep(Vys, each= 101   )   )
   VesselLine2$TYva <- predict( Mtva2, VesselLine2 )
 
-  ## TID & year
-  TIDF <- unique(ObsFs$G2)
   TIDV <- unique(ObsVs$G2)
-  Mtfa3 <- mgcv::gam( LA ~ s(RRadDistR , k =3 ,by = G2 )  ,  data = ObsFs  )
-  Mtfwt3 <- mgcv::gam( CWTall ~ s(RRadDistR , k =3 ,by =G2 )  ,  data = ObsFs  )
   Mtva3 <- mgcv::gam( LA ~ s(RRadDistR , k =3 ,by =G2)  ,  data = ObsVs  )
-  FiberLine3 <-  data.frame(RRadDistR= rep(seq(0,100,1),length(TIDF)) , G2= rep(TIDF, each= 101   )   )
   VesselLine3 <-  data.frame(RRadDistR= rep(seq(0,100,1),length(TIDV)) , G2= rep(TIDV, each= 101   )   )
-  FiberLine3$TYfa <- predict( Mtfa3, FiberLine3 )
-  FiberLine3$TYfwt <- predict( Mtfwt3, FiberLine3 )
   VesselLine3$TYva <- predict( Mtva3, VesselLine3 )
-  FiberLine3 <-tidyr::separate(FiberLine3, G2, c( "Year","TID"), sep = "_")
   VesselLine3 <-tidyr::separate(VesselLine3, G2, c( "Year","TID"), sep = "_")
 
+  if ( any(!is.na( ObsF ))    ) {
+    ### Fobers
+    ObsFs <- ObsF |> dplyr::mutate(G2 = as.factor(paste(Year,TID,sep = "_") ) )
+    ObsFs$Year  <- factor(ObsF$Year )
+
+    Mtfa <- mgcv::gam( LA ~ s(RRadDistR , k =4  )  ,  data = ObsF  )
+    Mtfwt <- mgcv::gam( CWTall ~ s(RRadDistR , k =4  )  ,  data = ObsF  )
+
+    cellline$MtFa <- predict(Mtfa,cellline   )
+    cellline$Mtfwt <- predict(Mtfwt,cellline   )
+
+    Mtfa2 <- mgcv::gam( LA ~ s(RRadDistR , k =4 ,by = Year  )  ,  data = ObsFs  )
+    Mtfwt2 <- mgcv::gam( CWTall ~ s(RRadDistR , k =4  ,by = Year)  ,  data = ObsFs  )
+
+    Fys <- unique(ObsF$Year)
+
+    FiberLine2 <-  data.frame(RRadDistR= rep(seq(0,100,1),length(Fys)) , Year= rep(Fys, each= 101   )   )
+    FiberLine2$TYfa <- predict( Mtfa2, FiberLine2 )
+    FiberLine2$TYfwt <- predict( Mtfwt2, FiberLine2 )
+
+    TIDF <- unique(ObsFs$G2)
+    Mtfa3 <- mgcv::gam( LA ~ s(RRadDistR , k =3 ,by = G2 )  ,  data = ObsFs  )
+    Mtfwt3 <- mgcv::gam( CWTall ~ s(RRadDistR , k =3 ,by =G2 )  ,  data = ObsFs  )
+    FiberLine3 <-  data.frame(RRadDistR= rep(seq(0,100,1),length(TIDF)) , G2= rep(TIDF, each= 101   )   )
+    FiberLine3$TYfa <- predict( Mtfa3, FiberLine3 )
+    FiberLine3$TYfwt <- predict( Mtfwt3, FiberLine3 )
+    FiberLine3 <-tidyr::separate(FiberLine3, G2, c( "Year","TID"), sep = "_")
+  } else {
+    FiberLine2 <- VesselLine2 / 100
+    FiberLine3 <- VesselLine3 / 100
+  }
+  ## total cell
+  ## total & year
+  ## TID & year
   return( list( Cline = cellline, Fline2 = FiberLine2, Fline3 = FiberLine3,
                 Vline2 = VesselLine2 , Vline3 = VesselLine3 ))
 

@@ -212,6 +212,10 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
 
   server <- function(input, output, session) {
 
+    if (all( is.na( ObsF)  )  ) {
+      ObsF = ObsV
+    }
+
     SimData <- reactiveValues(
       param = as.data.frame(param),
       Oldparam = as.data.frame(param),
@@ -350,8 +354,6 @@ sim_btr <- function( param, clims = NA, Tage =NA, ObsF =NA , ObsV =NA, Obsline =
     }) ## RegFigDiv end
 
     observeEvent(input$Sim, { ## 点击Run BTR ####
-
-
 
       StartY <- max( min(SimData$Tage$Year), min(SimData$clims$Year) ,input$syear )
       EndY <- min( max(SimData$Tage$Year), max(SimData$clims$Year)  ,input$eyear )
