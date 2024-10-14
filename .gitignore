@@ -60,3 +60,4 @@ rsconnect/
 .Rproj.user
 .Rhistory
 *.pper
+/.Rproj.user
