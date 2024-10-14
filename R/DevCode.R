@@ -45,11 +45,11 @@ library(shiny)
 
 ## Tab 1 ####
 dt <- dtRW <- read.csv("Test\\Tdt\\FM.csv")
-Nage = 'age'; Nrw = 'MRW' ; Nla = "MAXLA"
+Nage = 'age'; Nrw = 'MRW' ; Nla = "MaxLA"
 rwA = NULL; rwB =NULL; rwC = NULL; rwK = 5
 laA = NULL; laB = NULL; laC = NULL; laK = 5
 
-ResReg <- RegData(dt , Nage , Nrw, Nla,
+ResReg <- RegData(dt , Nage , Nrw, Nla,Ncd,Nrcta ,
                   rwA, rwB, rwC, rwK, laA, laB, laC, laK )
 
 ## Tab 2 ,3 ####

@@ -18,7 +18,7 @@ note：Please install the R package "rBTR" before using it.
 You can install the development version of BTR model like so:
 
 ```r
-# devtools::install_github("kdoodk/rBTR")
+# devtools::install_github("NEFU-TreeRingLab/rBTR")
 ```
 
 
