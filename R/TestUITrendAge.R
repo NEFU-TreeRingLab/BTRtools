@@ -18,18 +18,19 @@ Trend_age <-function(dt,... ){
   ui <- fluidPage(
               "Trend Age",
               sidebarPanel(width =3,
-                           "三种方法拟合年龄趋势",
+                           # "三种方法拟合年龄趋势",
+                           "Fitting Age Trend (GAM & exponential function)",
                            ## 读入 RW 和 MaxLA 序列拟合年龄趋势文件
-                           # fileInput("fileRW", "Updata csv file of TreeRing series",
-                           #           accept=c("text/csv", "text/comma-separated-values,text/plain")),
-                           # checkboxInput("headerRW", "Header", TRUE),
+                           fileInput("fileRW", "Updata csv file of TreeRing series(ring width & MaxLA )",
+                                     accept=c("text/csv", "text/comma-separated-values,text/plain")),
+                           checkboxInput("headerRW", "Manual parameter setting", TRUE),
                            # tags$hr(),
                            ## 指定行列名
                            textInput("xaxis", "colum of X-axis", "age"),
                            textInput("MRW", "colum of Ring Width", "MRW"),
-                           textInput("MaxLA", "colum of Max Lumen area", "MAXLA"),
-                           textInput("CD", "colum of Vessel density", "CD"),
-                           textInput("RCTA", "colum of RCTA", "RCTA"),
+                           textInput("MaxLA", "colum of Max Lumen area", "MaxLA"),
+                           # textInput("CD", "colum of Vessel density", "CD"),
+                           # textInput("RCTA", "colum of RCTA", "RCTA"),
 
                            tags$hr(),
                            ## 输入参数
