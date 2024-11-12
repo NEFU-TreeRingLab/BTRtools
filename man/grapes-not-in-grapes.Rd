@@ -2,10 +2,10 @@
 % Please edit documentation in R/Funtions.R
 \name{\%!in\%}
 \alias{\%!in\%}
-\title{取反集}
+\title{inverse data}
 \usage{
 ... \%!in\% NA
 }
 \description{
-取反集
+inverse data
 }

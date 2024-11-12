@@ -1,10 +1,17 @@
 Package: BTRtools
 Title: BTRmodel tools
-Version: 0.1.0.240807
+Version: 0.8.0.241112
 Authors@R: 
-    person("Binqing", "Zhao", , "zhaobinqing92@gmail.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+   Authors@R: 
+    c(person(given ="Binqing", 
+             family = "Zhao",
+             role = c("aut", "cre"),  
+             email = "binqing_zhao@163.com") ,
+      person(given ="Xiaochun", 
+             family = "Wang",
+             role = c("aut", "ths"),  
+             email = "wangx@nefu.edu.cn"))
+Description: The R package for assisting in the calibration of BTR model parameters..
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -21,3 +28,9 @@ Imports:
     shiny,
     tibble,
     tidyr
+Depends:
+    R (>= 4.1.0)    
+LazyData: true
+Byte-Compile: yes
+URL: http://github.com/NEFU-TreeRingLab/BTRtools
+BugReports: http://github.com/NEFU-TreeRingLab/BTRtools/issues
