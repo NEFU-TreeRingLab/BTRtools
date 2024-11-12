@@ -3,7 +3,7 @@
 <!-- badges: start -->
 
 <!-- badges: end -->
-
+## We are addressing a bug that causes the program to crash and making the UI more user-friendly. The user manual will be uploaded together after the issue has been fixed.
 **This is the Beta version of BTRtools**
 
 *Detailed usage instructions may be updated on September 30th.*
