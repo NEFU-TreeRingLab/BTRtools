@@ -1,67 +1,69 @@
+**Other Language Versions: [简体中文 ](README_zh_cn.md) **
+
 # BTRtools
 
-<!-- badges: start -->
+**This is the Beta version of `BTRtools`. If you have questions about using this R package or encounter issues during operation, please contact us.**
 
-<!-- badges: end -->
-## We are addressing a bug that causes the program to crash and making the UI more user-friendly. The user manual will be uploaded together after the issue has been fixed.
-**This is the Beta version of BTRtools**
+###### *A detailed user manual will be provided after the stable version of the R package is developed. However, it is unlikely to be available in the short term.*
 
-*Detailed usage instructions may be updated on September 30th.*
+`BTRtools` is a simple interactive interface on R developed based on Shiny to facilitate model parameterization.
 
-BTRtools is a simple interactive interface on R developed based on Shiny to facilitate model parameterization.
-
-note：Please install the R package "rBTR" before using it.
+- Note：Please install the R package `rBTR` before using it. [Link: rBTR](https://github.com/NEFU-TreeRingLab/rBTR)
 
 
 ## Installation
 
-You can install the development version of BTR model like so:
+You can install packages by using:
 
 ```r
+# Install rBTR package:
 # devtools::install_github("NEFU-TreeRingLab/rBTR")
+
+# Install BTRtools package:
+# devtools::install_github("NEFU-TreeRingLab/BTRtools")
 ```
 
 
-
-### There are three functions to calibrate the parameters of BTR model.
-
-* Funtion 1 : Fitting the Age Trend Curve for Growth
-
+## How to use
+#### `BTRtools` provides three functions to iteratively calibrate the parameters of the BTR model:
+##### Step 1: Fit the age trend of tree growth
   ```R
-  BTRtools::Trend_age( dt = Obs_Year  ) 
+  # BTRtools::trend_age() 
   ```
+##### Step 2: Adjust parameters for intra-annual growth of tree cells (fiber and vessel cells)
 
-Data. Frame: **Obs_Year** is the Tree series data.
+```r
+# BTRtools::cell_growth()
+```
 
-| Year | Age  | Ring width | Cell density | Max vessel lumen area | Vessel fraction |
-| ---- | ---- | ---------- | ------------ | --------------------- | --------------- |
-| 1960 | 1    | 3.98       | 84.96        | 1957.51               | 0.186           |
-| 1961 | 2    | 3.49       | 84.96        | 1957.51               | 0.186           |
-| 1962 | 3    | 2.11       | 37.09        | 1805.11               | 0.108           |
+##### Step 3: Adjust parameters for inter-annual tree growth
+```r
+# BTRtools::calibrate_BTR()
+```
+###### Note: Example data required for parameter calibration is included in the R package. Before use, export the data as CSV or Excel files.
+```r	
+# Climate data input:
+# data(Clims)
+# write.csv(Clims, 'Clims.csv')
+# write.xlsx(Clims, 'Clims.xlsx')
 
-------
+# Parameters:
+# data(BPparam)
+# write.csv(BPparam, 'BPparam.csv')
+# write.xlsx(BPparam, 'BPparam.xlsx')
 
-* Function 2 ： Calibration of Catheter and Fibroblast Growth Parameters
+# Observed value of tree ring:
+# data(BPring)
+# write.csv(BPring, 'BPring.csv')
+# write.xlsx(BPring, 'BPring.xlsx')
 
-  ```R
-  BTRtools::Sim_Cells(ObsV = ObsV,ObsF = ObsF,param = param )
-  ```
+# Observed value of fiber cells:
+# data(Cells)
+# write.csv(Cells, 'Cells.csv')
+# write.xlsx(Cells, 'Cells.xlsx')
 
-  Data. Frame: **ObsV** is the Roxas output data (sheet cells) of vessels,
-
-  Data. Frame: **ObsF** is the Roxas output data (sheet cells) of fiber cells,
-
-  Data. Frame: **param** is the parameter list of BTR model.
-
-  ------
-
-* Function 3 : Calibration BTR mdoel's Parameters.
-
-  ```R
-  BTRtools::sim_btr(param = param,Tage = Tage,clims = clims,ObsF = ObsF , ObsV = ObsV )
-  ```
-
-  Data. Frame: **Tage** is the "Age Trend Curve" output by Funtion 1
-
-  Data. Frame: **clims** is the daily climate data of sample site.
-
+# Observed value of vessels:
+# data(Vessels)
+# write.csv(Vessels, 'Vessels.csv')
+# write.xlsx(Vessels, 'Vessels.xlsx')
+```
