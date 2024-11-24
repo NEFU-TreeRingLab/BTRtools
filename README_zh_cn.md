@@ -10,6 +10,10 @@
 
 - Note：使用`BTRtools`前 请安装R包 `rBTR` 。[Link: rBTR](https://github.com/NEFU-TreeRingLab/rBTR)
 
+- 详细信息可以参看论文：
+
+  > Zhao, B. *et al.* A process-based model of climate-driven xylogenesis and tree-ring formation in broad-leaved trees (BTR). *Tree Physiol.* **44**, tpae127 (2024).[DOI:[10.1093/treephys/tpae127](http://dx.doi.org/10.1093/treephys/tpae127) ]
+
 ## 安装
 
 可以使用以下代码安装 rBTR 包:
