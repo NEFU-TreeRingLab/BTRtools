@@ -86,7 +86,7 @@ cell_growth <- function(...){
                 column(  width = 8, ## Col 1.2 Res
                          fluidRow( plotOutput( 'RegFigFiber',height = "750px" )  ),
                          # fluidRow(  tableOutput("testTableF")),
-                         # fluidRow(  tableOutput("testTableCB"))
+                         fluidRow(  tableOutput("testTableCB"))
                 ), ## Col 1.2
 
       ), ## Tab Fiber -
@@ -146,8 +146,37 @@ cell_growth <- function(...){
                                                c( 'Parameter', 'ParamType','Module', 'Values' )  ]
       return( head(df,3) )
     }) ## output$dParam end ------
+    ##
+    output$dFiber <- renderTable({
+      req(input$fileFiber)
+      file <- input$fileFiber$datapath
+      ext <- tools::file_ext(file)  # 获取文件扩展名
+      tryCatch(
+        {         ifelse(ext == "csv",
+                         df <- read.csv( file,  header = T ) ,
+                         df <- openxlsx::read.xlsx( file  ) )  },
+        error = function(e) { stop(safeError(e)) }
+      )
+      cls <- intersect(colnames(df),c( 'Year','LA','RadDistR','RRadDistR','CWTall'))
+      dataInCell$dtFiber <- df <- df[ , cls   ] |> dplyr::mutate(type= "Obs")
+      return( head(df,3) )
+    }) ## output$dFiber end ------
+    ##
+    output$dVessel <- renderTable({
+      req(input$fileVessel)
+      file <- input$fileVessel$datapath
+      ext <- tools::file_ext(file)  # 获取文件扩展名
+      tryCatch(
+        {         ifelse(ext == "csv",
+                         df <- read.csv( file,  header = T ) ,
+                         df <- openxlsx::read.xlsx( file  ) )  },
+        error = function(e) { stop(safeError(e)) }
+      )
+      cls <- intersect(colnames(df),c( 'Year','LA','RadDistR','RRadDistR'))
+      dataInCell$dtVessel <- df <- df[, cls   ] |> dplyr::mutate(type= "Obs")
+      return( head(df,3) )
+    }) ## output$dVessel end ------
 
-    return( head(df,3) )
 
 
 
@@ -214,21 +243,21 @@ cell_growth <- function(...){
                                         debounce(reactive(input[[id]]), 1500) } )
 
 
-    # # 渲染汇总表格
-    # output$testTableCB <- renderTable({
-    #
-    #     req( input$fileParam  )
-    #     # timer()
-    #     NewCB <- data.frame(Parameter = c("CTD", "CV",  "WT")  , NewValues = sapply(slidersCB, function(slider) slider()))
-    #     NewF  <- data.frame('Parameter' = c("va_c.fiber","va_w.fiber", "va_l.fiber","CAmax","ml","sl",
-    #                                         "mw","sw","WAmax","WTmax","WTmin","WTa"  ) ,
-    #                         'NewValues' = sapply(slidersF, function(slider) slider())   )
-    #
-    #     dataInCell$CBParam <- NewReplacesOld( NewCB, dataInCell$CBParam, ons = c( 'Parameter' ) )
-    #     dataInCell$FParam  <- NewReplacesOld( NewF , dataInCell$FParam , ons = c( 'Parameter' ) )
-    #
-    # return( dataInCell$FParam  )
-    # })
+    # 渲染汇总表格
+    output$testTableCB <- renderTable({
+
+        req( input$fileParam  )
+        # timer()
+        NewCB <- data.frame(Parameter = c("CTD", "CV",  "WT")  , NewValues = sapply(slidersCB, function(slider) slider()))
+        NewF  <- data.frame('Parameter' = c("va_c.fiber","va_w.fiber", "va_l.fiber","CAmax","ml","sl",
+                                            "mw","sw","WAmax","WTmax","WTmin","WTa"  ) ,
+                            'NewValues' = sapply(slidersF, function(slider) slider())   )
+
+        dataInCell$CBParam <- NewReplacesOld( NewCB, dataInCell$CBParam, ons = c( 'Parameter' ) )
+        dataInCell$FParam  <- NewReplacesOld( NewF , dataInCell$FParam , ons = c( 'Parameter' ) )
+
+    return( dataInCell$FParam  )
+    })
 
     ### 渲染 Fiber 模拟图 ####
     output$RegFigFiber <- renderPlot({
