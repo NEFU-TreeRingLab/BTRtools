@@ -1,4 +1,5 @@
 #' Calibration Cell Growth Parameters
+#' @name Calibration_Cell_Growth_Parameters
 #'
 #' @export cell_growth
 #' @import shiny
@@ -132,6 +133,9 @@ cell_growth <- function(...){
                          df <- openxlsx::read.xlsx( file  ) )  },
         error = function(e) { stop(safeError(e)) }
       )
+
+      df$Values <- as.numeric(df$Values)
+
       dataInCell$dtParam <- df ## Total Param
 
       dataInCell$CBParam <- dataInCell$dtParam[ dataInCell$dtParam$Module == 'InitialCambialCell'&

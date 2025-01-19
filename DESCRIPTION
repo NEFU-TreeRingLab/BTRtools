@@ -32,3 +32,4 @@ LazyData: true
 Byte-Compile: yes
 URL: http://github.com/NEFU-TreeRingLab/BTRtools
 BugReports: http://github.com/NEFU-TreeRingLab/BTRtools/issues
+License: Apache 2.0

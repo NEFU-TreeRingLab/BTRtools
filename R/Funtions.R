@@ -482,6 +482,8 @@ BtrResRemake <- function( dtlist = dataResBTR$ResBTR ,dtin = dataInBTR, years = 
   ## filter RWres
   pdRW <- pdRW[ pdRW$Year %in% Years,   ] |> dplyr::arrange(Year) |> dplyr::ungroup()
 
+  Res <- list(  )
+
   ## 有观测值就计算结果
   if ( dtin$ObsInput[1] == 1 ) {
     ResRW <- dtin$dtRW[ dtin$dtRW$Year %in% Years, ] |> dplyr::arrange(Year)  |> dplyr::ungroup()
@@ -491,16 +493,22 @@ BtrResRemake <- function( dtlist = dataResBTR$ResBTR ,dtin = dataInBTR, years = 
       ModTestList[[ icol ]] <- rBTR::mod.test( ResRW[[icol]]  ,pdRW[[icol]]   ) |> round(2) |> data.frame() ##
     }
     pdRW <-  pdRW |> dplyr::bind_rows( ResRW[,c('Year','type',Cols)]) |> tidyr::gather( key = Factor, value = val, c(-"Year", - "type"  )    )
+    Res[['pdRW']] <- pdRW
+    Res[['ModTestList']] <- ModTestList
+
   } ## if RW Obs
 
   ## Fiber
   ## 抽6年结果做展示
 
-  ShowYears <-  ifelse( !is.na(yC), intersect( Years, c(years[1]:years[2]) ), intersect( c(years[1]:years[2]), yC ) )
+  ShowYears <-  ifelse( is.na(yC), intersect( Years, c(years[1]:years[2]) ), intersect( c(years[1]:years[2]), yC ) )
   ifelse( length(ShowYears) > 6, selected_Years <- sample(ShowYears, 6) |> sort() ,selected_Years <- ShowYears  )
+  pdFiber <- pdF[ pdF$Year %in% selected_Years, ] |>
+    tidyr::gather(key = Fac, value = val , c('LA','CWTall'))
+  Res[['pdFiber']] <- pdFiber
+
   if (  dtin$ObsInput[2] == 1    ) {
-    pdFiber <- pdF[ pdF$Year %in% selected_Years, ] |>
-      tidyr::gather(key = Fac, value = val , c('LA','CWTall'))
+
     GamFiber <- dtin$dtFiber[dtin$dtFiber$Year%in% selected_Years,    ] |>
       GAMCells( celltype = "F"  ) |>
       tidyr::gather(key = Fac, value = val , c('LA','CWTall')) |>
@@ -514,12 +522,17 @@ BtrResRemake <- function( dtlist = dataResBTR$ResBTR ,dtin = dataInBTR, years = 
       dplyr::mutate( pvalue = dplyr::case_when(pvalue <= 0.05 ~ "*",pvalue > 0.05 ~ "" )  ,
                      ResC = paste0('r: ',round(  as.numeric(COR),3), pvalue,"\nMAPE: ",round( as.numeric(MAPE),1),"%"  )  )|>
       dplyr::rename(Fac = CellParam ) |> dplyr::filter( Year != 'all')##
+
+    Res[['TestFiber']] <- TestFiber
+    Res[['GamFiber']] <- GamFiber
   } ## If Fiber Obs
 
   ## Vessel
-  ShowYears <-  ifelse( !is.na(yV), intersect( Years, c(years[1]:years[2]) ), intersect( c(years[1]:years[2]), yV ) )
+  ShowYears <-  ifelse( is.na(yV), intersect( Years, c(years[1]:years[2]) ), intersect( c(years[1]:years[2]), yV ) )
+  pdVessel <- pdV[ pdV$Year %in% selected_Years  , ]
+  Res[['pdVessel']] <- pdVessel
   if ( dtin$ObsInput[3] == 1    ) {
-    pdVessel <- pdV[ pdV$Year %in% selected_Years  , ]
+
     GamVessel <- GAMCells( dt = dtin$dtVessel[dtin$dtVessel$Year %in% selected_Years,   ] ,celltype = "V"  ) |>
       dplyr::mutate(type = "ObsLine")
 
@@ -528,29 +541,26 @@ BtrResRemake <- function( dtlist = dataResBTR$ResBTR ,dtin = dataInBTR, years = 
       dplyr::mutate( pvalue = dplyr::case_when(pvalue <= 0.05 ~ "*",pvalue > 0.05 ~ "" )  ,
                      ResC = paste0('r: ',round(  as.numeric(COR),3), pvalue,"\nMAPE: ",round( as.numeric(MAPE),1),"%"  )  )|>
       dplyr::rename(Fac = CellParam ) |> dplyr::filter( Year != 'all')##
-
+    Res[['TestVessel']] <- TestVessel
+    Res[['GamVessel']] <- GamVessel
   } ## If Vessel Obs
 
   ### RR & DOY
   dtGamDOY <- dtlist$IntraAnnualGrowth[,c('Year','DOY','RingWidth')] |>
     dplyr::left_join( dtlist$annaulRing[,c("Year",'RingWidth')] |> dplyr::rename(MRW = RingWidth)) |>
     dplyr::mutate( RRadDistR =RingWidth/MRW *100     ) |> dplyr::filter(Year %in% ShowYears   )
-  GamDOY <- mgcv::gam( DOY  ~ s(RRadDistR , k =4 ,by = Year  ) , data = dtGamDOY )
+  GamDOY <- mgcv::gam( DOY  ~ s(RRadDistR , k = 4 ,by = Year  ) , data = dtGamDOY )
 
   inFiber <- dtin$dtFiber[ dtin$dtFiber$Year %in% selected_Years, ]
   inVessel <- dtin$dtVessel[ dtin$dtVessel$Year %in% selected_Years, ]
-  inFiber$DOY <- predict(GamDOY , inFiber )
-  inVessel$DOY <- predict(GamDOY , inVessel )
-
-
-  Res <- list(
-    pdRW = pdRW , ModTestList = ModTestList ,
-    pdFiber = pdFiber, pdVessel = pdVessel ,
-    inFiber = inFiber , inVessel =inVessel,
-    TestFiber = TestFiber, TestVessel = TestVessel ,
-    GamFiber = GamFiber,  GamVessel = GamVessel
-
-  )
+  if (!is.null(inFiber)) {
+    inFiber$DOY <- predict(GamDOY , inFiber )
+    Res[['inFiber']] <- inFiber
+  }
+  if (!is.null(inVessel)) {
+    inVessel$DOY <- predict(GamDOY , inVessel )
+    Res[['inVessel']] <- inVessel
+  }
 
   return( Res )
 }## BtrResRemake -
@@ -574,18 +584,25 @@ GAMCells <- function( dt, celltype= "V"   ){
   if (celltype == "F") {
     for (i in unique( dt$Year) ) {
 
+      if (nrow(dt[ dt$Year == i ,]) >= 5 ) { ks <- 5 } else { Ks <- 3 }
+      if (nrow(dt[ dt$Year == i ,]) < 3 ) { break }
+
       GAM1 <- mgcv::gam( LA ~ s(RRadDistR , k = 5  ) ,data = dt[ dt$Year == i ,]    )
       DT$LA <- predict( GAM1, DT  )
 
-      GAM2 <- mgcv::gam( CWTall ~ s(RRadDistR , k = 5  ) ,data = dt    )
+      GAM2 <- mgcv::gam( CWTall ~ s(RRadDistR , k = ks  ) ,data = dt    )
       DT$CWTall <- predict( GAM2, DT  )
       Res[[ as.character(i) ]] <- DT
     }
   }else{
     for (i in unique( dt$Year) ) {
-      GAM1 <- mgcv::gam( LA ~ s(RRadDistR , k = 5  ) ,data = dt[ dt$Year == i ,]    )
+      if (nrow(dt[ dt$Year == i ,]) >= 5 ) { ks <- 5 } else { Ks <- 3 }
+      if (nrow(dt[ dt$Year == i ,]) < 3 ) { break }
+
+      GAM1 <- mgcv::gam( LA ~ s(RRadDistR , k = ks  ) ,data = dt[ dt$Year == i ,]    )
       DT$LA <- predict( GAM1, DT  )
       Res[[ as.character(i) ]] <- DT
+
     }
 
   }

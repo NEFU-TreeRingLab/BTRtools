@@ -1,4 +1,5 @@
 #' Estimation Trends of age
+#' @name Estimation_Trends_of_age
 #'
 #' @export trend_age
 #' @import shiny

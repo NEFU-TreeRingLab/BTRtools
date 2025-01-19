@@ -1,4 +1,5 @@
 #' Calibration Cell Growth Parameters
+#' @name Calibration_Cell_Growth_Parameters
 #'
 #' @export calibrate_BTR
 #' @import shiny
@@ -403,42 +404,47 @@ calibrate_BTR <- function(....){
       dataResBTR$ReRes <- BtrResRemake(  dtlist = dataResBTR$ResBTR ,dtin = dataInBTR, years = input$ShowY, yC, yV )
 
       RingFig <- list()
-      for (i_p in c( 'MRW', 'CD', 'RCTA')) {
-        RingFig[[i_p]] <- dataResBTR$ReRes$pdRW |> dplyr::filter(  Factor == i_p ) |>
-          ggplot2::ggplot( ggplot2::aes(x = Year, y =val, color = type, linetype = type )   )+
-          ggplot2::theme_bw()+
-          ggplot2::theme(text = ggplot2::element_text(size = 14))+
-          ggplot2::labs(y = i_p, subtitle = paste0( 'Cor: ', dataResBTR$ReRes$ModTestList[[i_p]]$COR,"   p: ",dataResBTR$ReRes$ModTestList[[i_p]]$pvalue,
-                                                    '   RMSE: ', dataResBTR$ReRes$ModTestList[[i_p]]$RMSE, '\nNRMSD: ', dataResBTR$ReRes$ModTestList[[i_p]]$NRMSD,
-                                                    '   MAE: ', dataResBTR$ReRes$ModTestList[[i_p]]$MAE,'   MAPE: ', dataResBTR$ReRes$ModTestList[[i_p]]$MAPE  ) )+
-          ggplot2::geom_line(linewidth = 1.1)+
-          ggplot2::facet_grid( Factor~. ,scales = 'free')
+      if (dataInBTR$ObsInput[1] == 1 ) {
+        for (i_p in intersect( unique(dataResBTR$ReRes$pdRW$Factor), c( 'MRW', 'CD', 'RCTA'))  ) {##
+          RingFig[[i_p]] <- dataResBTR$ReRes$pdRW |> dplyr::filter(  Factor == i_p ) |>
+            ggplot2::ggplot( ggplot2::aes(x = Year, y =val, color = type, linetype = type )   )+
+            ggplot2::theme_bw()+
+            ggplot2::theme(text = ggplot2::element_text(size = 14))+
+            ggplot2::labs(y = i_p, subtitle = paste0( 'Cor: ', dataResBTR$ReRes$ModTestList[[i_p]]$COR,"   p: ",dataResBTR$ReRes$ModTestList[[i_p]]$pvalue,
+                                                      '   RMSE: ', dataResBTR$ReRes$ModTestList[[i_p]]$RMSE, '\nNRMSD: ', dataResBTR$ReRes$ModTestList[[i_p]]$NRMSD,
+                                                      '   MAE: ', dataResBTR$ReRes$ModTestList[[i_p]]$MAE,'   MAPE: ', dataResBTR$ReRes$ModTestList[[i_p]]$MAPE  ) )+
+            ggplot2::geom_line(linewidth = 1.1)+
+            ggplot2::facet_grid( Factor~. ,scales = 'free')
+        }
+        output$Rings <- renderPlot({ ggpubr::ggarrange( plotlist = RingFig, ncol = 1, align = 'hv',common.legend = T,legend = 'top') })
       }
-      output$Rings <- renderPlot({ ggpubr::ggarrange( plotlist = RingFig, ncol = 1, align = 'hv',common.legend = T,legend = 'top') })
 
-      output$Fibers <- renderPlot({
-        ggplot2::ggplot( )+
-          ggplot2::theme_bw()+
-          ggplot2::scale_y_continuous(expand =ggplot2::expansion(c(0,0.4 ) )  )+
-          ggplot2::geom_point( data= dataResBTR$ReRes$pdFiber , ggplot2::aes( x = RRadDistR , y = val , color = "Sim"),size = 1,alpha= 0.5     )+
-          ggplot2::geom_line( data = dataResBTR$ReRes$GamFiber , ggplot2::aes(x = RRadDistR, y = val, color= "ObsLine" ), linetype = 2,linewidth = 1.5   )+
-          ggplot2::geom_smooth( data= dataResBTR$ReRes$pdFiber , ggplot2::aes( x = RRadDistR , y = val , color = "SimLine"), linewidth = 1 ,se= F,
-                                method = 'gam',formula = y~s(x, k = 5 )   )+
-          ggplot2::geom_text(data =dataResBTR$ReRes$TestFiber, ggplot2::aes( x = Inf, y = Inf , label = ResC, hjust = 1.2, vjust = 1.2 ) )+
-          ggplot2::facet_grid( factor(Fac,levels = c( 'LA' ,'CWTall') )  ~Year ,scale="free")
-      })
-
-      output$Vessels <- renderPlot({
-        ggplot2::ggplot( )+
-          ggplot2::theme_bw()+
-          ggplot2::scale_y_continuous(expand = ggplot2::expansion(c(0,0.4 ) )  )+
-          ggplot2::geom_point( data= dataResBTR$ReRes$pdVessel , ggplot2::aes( x = RRadDistR , y = LA , color = "Sim"),size = 1,alpha= 0.5     )+
-          ggplot2::geom_line( data = dataResBTR$ReRes$GamVessel , ggplot2::aes(x = RRadDistR, y = LA, color= "ObsLine" ), linetype = 2,linewidth = 1.5   )+
-          ggplot2::geom_smooth( data= dataResBTR$ReRes$pdVessel , ggplot2::aes( x = RRadDistR , y = LA , color = "SimLine"), linewidth = 1 ,se= F,
-                                method = 'gam',formula = y~s(x, k = 4 )   )+
-          ggplot2::geom_text(data =dataResBTR$ReRes$TestVessel, ggplot2::aes( x = Inf, y = Inf , label = ResC, hjust = 1.2, vjust = 1.2 ) )+
-          ggplot2::facet_grid(.~Year ,scale="free")
-      })
+      if (dataInBTR$ObsInput[2] == 1 ) {
+        output$Fibers <- renderPlot({
+          ggplot2::ggplot( )+
+            ggplot2::theme_bw()+
+            ggplot2::scale_y_continuous(expand =ggplot2::expansion(c(0,0.4 ) )  )+
+            ggplot2::geom_point( data= dataResBTR$ReRes$pdFiber , ggplot2::aes( x = RRadDistR , y = val , color = "Sim"),size = 1,alpha= 0.5     )+
+            ggplot2::geom_line( data = dataResBTR$ReRes$GamFiber , ggplot2::aes(x = RRadDistR, y = val, color= "ObsLine" ), linetype = 2,linewidth = 1.5   )+
+            ggplot2::geom_smooth( data= dataResBTR$ReRes$pdFiber , ggplot2::aes( x = RRadDistR , y = val , color = "SimLine"), linewidth = 1 ,se= F,
+                                  method = 'gam',formula = y~s(x, k = 5 )   )+
+            ggplot2::geom_text(data =dataResBTR$ReRes$TestFiber, ggplot2::aes( x = Inf, y = Inf , label = ResC, hjust = 1.2, vjust = 1.2 ) )+
+            ggplot2::facet_grid( factor(Fac,levels = c( 'LA' ,'CWTall') )  ~Year ,scale="free")
+        })
+      }
+      if (dataInBTR$ObsInput[3] == 1 ) {
+        output$Vessels <- renderPlot({
+          ggplot2::ggplot( )+
+            ggplot2::theme_bw()+
+            ggplot2::scale_y_continuous(expand = ggplot2::expansion(c(0,0.4 ) )  )+
+            ggplot2::geom_point( data= dataResBTR$ReRes$pdVessel , ggplot2::aes( x = RRadDistR , y = LA , color = "Sim"),size = 1,alpha= 0.5     )+
+            ggplot2::geom_line( data = dataResBTR$ReRes$GamVessel , ggplot2::aes(x = RRadDistR, y = LA, color= "ObsLine" ), linetype = 2,linewidth = 1.5   )+
+            ggplot2::geom_smooth( data= dataResBTR$ReRes$pdVessel , ggplot2::aes( x = RRadDistR , y = LA , color = "SimLine"), linewidth = 1 ,se= F,
+                                  method = 'gam',formula = y~s(x, k = 4 )   )+
+            ggplot2::geom_text(data =dataResBTR$ReRes$TestVessel, ggplot2::aes( x = Inf, y = Inf , label = ResC, hjust = 1.2, vjust = 1.2 ) )+
+            ggplot2::facet_grid(.~Year ,scale="free")
+        })
+      }
 
 
       if (dataInBTR$ObsInput[2] == 1   ) {
