@@ -244,20 +244,20 @@ cell_growth <- function(...){
 
 
     # 渲染汇总表格
-    output$testTableCB <- renderTable({
-
-        req( input$fileParam  )
-        # timer()
-        NewCB <- data.frame(Parameter = c("CTD", "CV",  "WT")  , NewValues = sapply(slidersCB, function(slider) slider()))
-        NewF  <- data.frame('Parameter' = c("va_c.fiber","va_w.fiber", "va_l.fiber","CAmax","ml","sl",
-                                            "mw","sw","WAmax","WTmax","WTmin","WTa"  ) ,
-                            'NewValues' = sapply(slidersF, function(slider) slider())   )
-
-        dataInCell$CBParam <- NewReplacesOld( NewCB, dataInCell$CBParam, ons = c( 'Parameter' ) )
-        dataInCell$FParam  <- NewReplacesOld( NewF , dataInCell$FParam , ons = c( 'Parameter' ) )
-
-    return( dataInCell$FParam  )
-    })
+    # output$testTableCB <- renderTable({
+    #
+    #     req( input$fileParam  )
+    #     # timer()
+    #     NewCB <- data.frame(Parameter = c("CTD", "CV",  "WT")  , NewValues = sapply(slidersCB, function(slider) slider()))
+    #     NewF  <- data.frame('Parameter' = c("va_c.fiber","va_w.fiber", "va_l.fiber","CAmax","ml","sl",
+    #                                         "mw","sw","WAmax","WTmax","WTmin","WTa"  ) ,
+    #                         'NewValues' = sapply(slidersF, function(slider) slider())   )
+    #
+    #     dataInCell$CBParam <- NewReplacesOld( NewCB, dataInCell$CBParam, ons = c( 'Parameter' ) )
+    #     dataInCell$FParam  <- NewReplacesOld( NewF , dataInCell$FParam , ons = c( 'Parameter' ) )
+    #
+    # return( dataInCell$FParam  )
+    # })
 
     ### 渲染 Fiber 模拟图 ####
     output$RegFigFiber <- renderPlot({

@@ -438,7 +438,12 @@ PartELcells <- function(dt = dataInCell$dtVessel ){
   dt$type <- 'Obs'
   dt$EL[dt$RRadDistR <= P1   ] <- "Earlywood"
   dt$EL[dt$RRadDistR >= P2 & dt$RRadDistR <= P3   ] <- "Latewood"
-  dt <- dt[dt$EL != 'UU',  c("LA"  , 'CWTall','EL','type' )  ]
+
+  if ( any(colnames(dt) %!in% 'CWTall'  ) ) {
+    dt$CWTall <- NA
+  }
+
+  dt <- dt[dt$EL != 'UU',  c("LA"  , 'CWTall','EL','type' )  ] ##
   colnames(dt ) <- c( 'CV' , 'WT' , 'EL','type' )
   return( dt )
 }

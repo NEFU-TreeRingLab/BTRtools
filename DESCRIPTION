@@ -1,6 +1,6 @@
 Package: BTRtools
 Title: BTRmodel tools
-Version: 0.8.5.241124
+Version: 0.8.8.241229
 Authors@R: 
     c(person(given ="Binqing", 
              family = "Zhao",

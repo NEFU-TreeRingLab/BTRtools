@@ -38,6 +38,7 @@
 
 # devtools::install()
 
+# devtools::uninstall()
 
 library(tidyverse)
 
@@ -46,7 +47,12 @@ library(tidyverse)
 library(shiny)
 
 
-###
+### cell growth
+input <- list()
+input$LiF <- 0.1
+input$LiV <- 0.1
+input$dry <- c( 0.8,0.9,1)
+
 dataInCell <- list()
 dataInCell$dtParam <- openxlsx::read.xlsx('C:\\Users\\Dr. Zhao\\Desktop\\TestData\\2.LSBP_Parameters.xlsx')    # df ## Total Param
 
@@ -66,6 +72,43 @@ df <- read.csv('C:\\Users\\Dr. Zhao\\Desktop\\TestData\\5.Cells.csv')
 cls <- intersect(colnames(df),c( 'Year','LA','RadDistR','RRadDistR','CWTall'))
 dataInCell$dtFiber <- df <- df[ , cls   ] |> dplyr::mutate(type= "Obs")
 
+df <- read.csv('C:\\Users\\Dr. Zhao\\Desktop\\TestData\\6.Vessel.csv')
+cls <- intersect(colnames(df),c( 'Year','LA','RadDistR','RRadDistR'))
+dataInCell$dtVessel <- df <- df[, cls   ] |> dplyr::mutate(type= "Obs")
+
+###
+
+input <- list()
+input$LiF <- 0.1
+input$LiV <- 0.1
+input$dry <- c( 0.8,0.9,1)
+input$Syear <- 2010
+input$Eyear <- 2015
+input$Cores <- 6
+input$ShowY <- c(2010:2015)
+
+input$`T1&4` <- c( 2,15 )
+input$deltaH_A_Da <- 1
+input$deltaH_D <- 4
+input$deltaS_D <- 3
+input$`M1&2` <- c( 0.1,0.3)
+input$`M3&4` <- c( 0.5,0.7)
+input$`VPD1&2` <- c( 0,0.2 )
+input$`VPD3&4` <- c( 1,3)
+
+dataInBTR <- list(   )
+dataResBTR <- list(   )
+
+dataInBTR$dtClim <- openxlsx::read.xlsx('C:\\Users\\Dr. Zhao\\Desktop\\TestData\\1.LSClim1.xlsx')
+dataInBTR$dtParam <- openxlsx::read.xlsx('C:\\Users\\Dr. Zhao\\Desktop\\TestData\\2.LSBP_Parameters.xlsx')
+dataInBTR$dtTrend <- openxlsx::read.xlsx('C:\\Users\\Dr. Zhao\\Desktop\\TestData\\3.TrendAge.xlsx')
+dataInBTR$dtRW <- read.csv('C:\\Users\\Dr. Zhao\\Desktop\\TestData\\4.BP_Ring.csv')|> dplyr::mutate(type= "Obs")
+df <- read.csv('C:\\Users\\Dr. Zhao\\Desktop\\TestData\\5.Cells.csv')
+cls <- intersect(colnames(df),c( 'Year','LA','RadDistR','RRadDistR','CWTall'))
+dataInBTR$dtFiber <- df <- df[ , cls   ] |> dplyr::mutate(type= "Obs")
+df <- read.csv('C:\\Users\\Dr. Zhao\\Desktop\\TestData\\6.Vessel.csv')
+cls <- intersect(colnames(df),c( 'Year','LA','RadDistR','RRadDistR'))
+dataInBTR$dtVessel <- df <- df[, cls   ] |> dplyr::mutate(type= "Obs")
 # ## Tab 1 ####
 # dt <- dtRW <- read.csv("Test\\Tdt\\FM.csv")
 # Nage = 'age'; Nrw = 'MRW' ; Nla = "MaxLA"

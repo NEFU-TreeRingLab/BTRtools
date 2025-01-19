@@ -480,7 +480,7 @@ calibrate_BTR <- function(....){
           ggplot2::geom_smooth( ggplot2::aes(color= "SimLine"), method = 'gam', formula = y~s(x, k = 5),se = F ,linewidth = 1)
 
       }
-      output$PhotoOld <- renderPlot({ggpubr::ggarrange(PshowF, PshowV, ncol =2 ,align = 'hv', common.legend = T   )  })
+      output$PhotoOld <- renderPlot({ ggpubr::ggarrange(PshowF, PshowV, ncol =2 ,align = 'hv', common.legend = T   )  })
 
       ## Other Calculate
 
@@ -557,8 +557,13 @@ calibrate_BTR <- function(....){
       GRParam <- data.frame( Parameter = c("T1","T4","deltaH_A_Da","deltaH_D","deltaS_D","M1","M2","M3","M4","VPD1","VPD2","VPD3","VPD4"),
                              Values = c( input$`T1&4`, input$deltaH_A_Da,input$deltaH_D,input$deltaS_D,
                                          input$`M1&2`,input$`M3&4`, input$`VPD1&2`,input$`VPD3&4`) )
-      Pdata <- GRsim( GRParam = GRParam,dt = dataInBTR$dtClim ,dtRW = dataResBTR$ReRes$detrendRW , ys = input$ShowY   )
-      cors <- cor.test(Pdata$LimY$degR ,Pdata$LimY$deRW )
+      Pdata <- GRsim( GRParam = GRParam, dt = dataInBTR$dtClim , dtRW = dataResBTR$ReRes$detrendRW , ys = input$ShowY   )
+      if( length(Pdata$LimY$degR) >=3   ){
+        cors <- cor.test( Pdata$LimY$degR,Pdata$LimY$deRW )
+      } else {
+        cors <- cor.test( c(Pdata$LimY$degR,1,1  ) ,c(Pdata$LimY$deRW,1,1  )  )
+      }
+
       # 三个曲线：
       df <- data.frame( Clim = 'TEM', Xval = seq( input$`T1&4`[1],input$`T1&4`[2],0.1  ) )
       Ta <- df$Xval + 273.15
@@ -567,7 +572,7 @@ calibrate_BTR <- function(....){
                             (1 + exp( input$deltaS_D / R - input$deltaH_D /(R*Ta) ) ) ) |>
         rBTR::nor( Zeros = T)
       df2 <- data.frame( Clim = rep(c('SoilM',"VPD"),each =4 ) ,
-                         Xval = c(  input$`M1&2`,input$`M3&4`, input$`V1&2`,input$`V3&4`     ),
+                         Xval = c(  input$`M1&2`,input$`M3&4`, input$`VPD1&2`,input$`VPD3&4`     ),
                          Growth_rate = c( 0,1,1,0,0,1,1,0     )) |> dplyr::bind_rows(df)
 
       hlins <- data.frame( Clim = c('TEM','TEM','TEM', 'soilM', 'soilM','soilM','soilM','VPD','VPD','VPD','VPD' ) ,
