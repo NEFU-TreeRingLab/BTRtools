@@ -214,8 +214,10 @@ calibrate_BTR <- function(....){
       ext <- tools::file_ext(file)  # 获取文件扩展名
       tryCatch(
         {         ifelse(ext == "csv",
-                         df <- read.csv( file,  header = T ) ,
-                         df <- openxlsx::read.xlsx( file  ) )  },
+                         df <- read.csv( file,  header = T ) |>
+                           dplyr::mutate(Values = as.numeric(Values)) ,
+                         df <- openxlsx::read.xlsx( file  )|>
+                           dplyr::mutate(Values = as.numeric(Values)) )  },
         error = function(e) { stop(safeError(e)) }
       )
       dataInBTR$dtParam <- df ## Total Param
